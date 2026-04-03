@@ -215,7 +215,7 @@ All resources in `rg-movie-rating-agent-dev` (eastus2):
 - **AI Services**: `ai-movie-rating-agent-dev` — 3 deployments (gpt-5.4, gpt-4o, gpt-4o-mini)
 - **Storage**: `stmtatdev` — blob container `jobs`, queue `job-requests`
 - **Function App**: `func-movie-rating-agent-dev` — .NET 10 isolated, AlwaysOn, CORS `*`
-- **Static Web App**: `swa-movie-rating-agent-dev` — Free tier
+- **Static Web App**: `swa-movie-rating-agent-dev` — Standard tier
 - **App Insights**: `appi-movie-rating-agent-dev`
 - **Log Analytics**: `log-movie-rating-agent-dev`
 

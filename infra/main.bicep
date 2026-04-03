@@ -59,7 +59,7 @@ module staticWebApp 'staticWebApp.bicep' = {
   params: {
     environmentName: environmentName
     location: location
-    functionAppHostname: functionApp.outputs.functionAppHostname
+    functionAppName: functionApp.outputs.functionAppName
   }
 }
 

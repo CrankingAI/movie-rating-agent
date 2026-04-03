@@ -4,8 +4,8 @@ param environmentName string
 @description('Azure region for all resources.')
 param location string
 
-@description('Function App hostname for API backend.')
-param functionAppHostname string
+@description('Function App resource name for API backend.')
+param functionAppName string
 
 var staticWebAppName = 'swa-movie-rating-agent-${environmentName}'
 
@@ -13,8 +13,8 @@ resource staticWebApp 'Microsoft.Web/staticSites@2023-12-01' = {
   name: staticWebAppName
   location: location
   sku: {
-    name: 'Free'
-    tier: 'Free'
+    name: 'Standard'
+    tier: 'Standard'
   }
   properties: {
     stagingEnvironmentPolicy: 'Enabled'
@@ -30,7 +30,7 @@ resource backendLink 'Microsoft.Web/staticSites/linkedBackends@2023-12-01' = {
   parent: staticWebApp
   name: 'functionAppBackend'
   properties: {
-    backendResourceId: resourceId('Microsoft.Web/sites', 'func-movie-rating-agent-${environmentName}')
+    backendResourceId: resourceId('Microsoft.Web/sites', functionAppName)
     region: location
   }
 }
