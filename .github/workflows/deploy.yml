@@ -24,7 +24,6 @@ jobs:
             echo "AZURE_LOCATION=${LOCATION}"
             echo "AZURE_RESOURCE_GROUP=${RESOURCE_GROUP}"
             echo "AZURE_FUNCTION_APP=${FUNCTION_APP}"
-            echo "AZURE_FUNCTION_HOST=${FUNCTION_HOST}"
             echo "AZURE_SWA_NAME=${SWA_NAME}"
             echo "AZURE_SWA_DEPLOY_ENV=${SWA_DEPLOY_ENV}"
           } >> "$GITHUB_ENV"
@@ -59,7 +58,6 @@ jobs:
           {
             echo "AZURE_RESOURCE_GROUP=${RESOURCE_GROUP}"
             echo "AZURE_FUNCTION_APP=${FUNCTION_APP}"
-            echo "AZURE_FUNCTION_HOST=${FUNCTION_HOST}"
             echo "AZURE_SWA_NAME=${SWA_NAME}"
             echo "AZURE_SWA_DEPLOY_ENV=${SWA_DEPLOY_ENV}"
           } >> "$GITHUB_ENV"
@@ -98,24 +96,6 @@ jobs:
           npx -y @azure/static-web-apps-cli deploy ./swa \
             --deployment-token "$DEPLOY_TOKEN" \
             --env "${{ env.AZURE_SWA_DEPLOY_ENV }}"
-
-      - name: Verify Function App deployment
-        shell: bash
-        run: |
-          EXPECTED="${{ steps.version.outputs.version }}"
-          for attempt in $(seq 1 12); do
-            READYZ=$(curl -sf "https://${{ env.AZURE_FUNCTION_HOST }}/api/readyz" || true)
-            DEPLOYED=$(echo "$READYZ" | python3 -c "import sys,json; print(json.load(sys.stdin).get('version',''))" 2>/dev/null || true)
-            DEPLOYED_COMMIT=$(echo "$READYZ" | python3 -c "import sys,json; print(json.load(sys.stdin).get('commit','')[:7])" 2>/dev/null || true)
-            if [ "$DEPLOYED" = "$EXPECTED" ]; then
-              echo "Verified Function App: v${DEPLOYED} (${DEPLOYED_COMMIT:-unknown})"
-              exit 0
-            fi
-            echo "Waiting for Function App (${attempt}/12)..."
-            sleep 10
-          done
-          echo "::error::Function App version drift: expected v${EXPECTED}, got v${DEPLOYED:-?}"
-          exit 1
 
       - name: Verify SWA route and backend
         shell: bash

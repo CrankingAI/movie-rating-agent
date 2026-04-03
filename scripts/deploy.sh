@@ -130,11 +130,7 @@ if [[ "$DEPLOY_SWA" == true ]]; then
 fi
 
 # ── Verify ────────────────────────────────────────────────────────────────
-if [[ "$DEPLOY_FUNC" == true ]]; then
-  poll_readyz "https://${FUNCTION_HOST}/api/readyz" "Function App" "$VERSION"
-fi
-
-if [[ "$DEPLOY_SWA" == true ]]; then
+if [[ "$DEPLOY_FUNC" == true || "$DEPLOY_SWA" == true ]]; then
   echo "==> Verifying SWA route and linked backend..."
   SWA_HOST="$(az staticwebapp show --name "$SWA_NAME" --resource-group "$RESOURCE_GROUP" --query defaultHostname -o tsv)"
   curl -sfI "https://${SWA_HOST}/" >/dev/null
