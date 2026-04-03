@@ -1,0 +1,13 @@
+<Project>
+
+  <!-- Read version from the VERSION file at repo root -->
+  <PropertyGroup>
+    <VersionFile>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)VERSION').Trim())</VersionFile>
+    <Version>$(VersionFile)</Version>
+    <AssemblyVersion>$(VersionFile).0</AssemblyVersion>
+    <FileVersion>$(VersionFile).0</FileVersion>
+    <InformationalVersion>$(VersionFile)</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+</Project>

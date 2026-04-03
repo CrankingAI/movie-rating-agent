@@ -1,0 +1,33 @@
+sequenceDiagram
+    participant Client as Client (SWA)
+    participant API as Azure Functions
+    participant Queue as Storage Queue
+    participant Agent as Movie Rating Agent
+    participant Blob as Blob Storage
+
+    Client->>API: POST /api/jobs { topic: "Heat" }
+    API->>Blob: Write request.json + meta.json (Queued)
+    API->>Queue: Enqueue jobId
+    API-->>Client: 202 Accepted { jobId }
+
+    Queue->>API: Queue trigger fires
+    API->>Blob: Update meta.json (Running)
+    API->>Agent: RunAsync(request)
+
+    Note over Agent: Title Resolution
+    Note over Agent: Fan-out: 3 Scorers in parallel
+    Note over Agent: Fan-in + ProsConsRollup
+    Note over Agent: WeightedScoreRollup
+
+    Agent-->>API: JobResponse (score, reasoning, pros, cons)
+    API->>Blob: Write response.json + meta.json (Completed)
+
+    loop Poll every 2s
+        Client->>API: GET /api/jobs/{jobId}
+        API->>Blob: Read meta.json
+        API-->>Client: { meta: { Status: "Running" } }
+    end
+
+    Client->>API: GET /api/jobs/{jobId}
+    API->>Blob: Read meta.json + response.json
+    API-->>Client: { meta: { Status: "Completed" }, result: { score: 90, ... } }

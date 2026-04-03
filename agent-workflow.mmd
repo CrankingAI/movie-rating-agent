@@ -1,0 +1,19 @@
+flowchart TD
+  Start["Start (Start)"];
+  PopularityScorer["PopularityScorer"];
+  ArtisticValueScorer["ArtisticValueScorer"];
+  IconicnessScorer["IconicnessScorer"];
+  ResultCollector["ResultCollector"];
+  ProsConsRollup["ProsConsRollup"];
+  WeightedScoreRollup["WeightedScoreRollup"];
+
+  fan_in_ResultCollector_836F92AC((fan-in))
+  ArtisticValueScorer --> fan_in_ResultCollector_836F92AC;
+  IconicnessScorer --> fan_in_ResultCollector_836F92AC;
+  PopularityScorer --> fan_in_ResultCollector_836F92AC;
+  fan_in_ResultCollector_836F92AC --> ResultCollector;
+  Start --> PopularityScorer;
+  Start --> ArtisticValueScorer;
+  Start --> IconicnessScorer;
+  ResultCollector -. conditional .-> ProsConsRollup;
+  ProsConsRollup --> WeightedScoreRollup;

@@ -1,0 +1,19 @@
+.DS_Store
+
+# IDE and local tooling
+.vs/
+*.user
+*.suo
+*.userprefs
+.claude/settings.local.json
+
+# .NET build output
+**/bin/
+**/obj/
+TestResults/
+
+# Local Azure Functions settings
+local.settings.json
+
+# Publish output
+publish/

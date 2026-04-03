@@ -1,0 +1,92 @@
+[
+  {
+    "model": "gpt-5.4",
+    "movie": "The Godfather",
+    "metrics": {
+      "Groundedness": 0,
+      "Coherence": 5,
+      "Relevance": 5
+    },
+    "error": null
+  },
+  {
+    "model": "gpt-5.4",
+    "movie": "Santa Claus Conquers the Martians",
+    "metrics": {
+      "Groundedness": 0,
+      "Coherence": 5,
+      "Relevance": 5
+    },
+    "error": null
+  },
+  {
+    "model": "gpt-5.4",
+    "movie": "Citizen Kane",
+    "metrics": {
+      "Groundedness": 0,
+      "Relevance": 5,
+      "Coherence": 5
+    },
+    "error": null
+  },
+  {
+    "model": "gpt-4o",
+    "movie": "The Godfather",
+    "metrics": {
+      "Groundedness": 0,
+      "Coherence": 5,
+      "Relevance": 5
+    },
+    "error": null
+  },
+  {
+    "model": "gpt-4o",
+    "movie": "Santa Claus Conquers the Martians",
+    "metrics": {
+      "Groundedness": 0,
+      "Relevance": 5,
+      "Coherence": 4
+    },
+    "error": null
+  },
+  {
+    "model": "gpt-4o",
+    "movie": "Citizen Kane",
+    "metrics": {
+      "Groundedness": 0,
+      "Coherence": 5,
+      "Relevance": 5
+    },
+    "error": null
+  },
+  {
+    "model": "gpt-4o-mini",
+    "movie": "The Godfather",
+    "metrics": {
+      "Groundedness": 0,
+      "Coherence": 5,
+      "Relevance": 4
+    },
+    "error": null
+  },
+  {
+    "model": "gpt-4o-mini",
+    "movie": "Santa Claus Conquers the Martians",
+    "metrics": {
+      "Groundedness": 0,
+      "Coherence": 4,
+      "Relevance": 5
+    },
+    "error": null
+  },
+  {
+    "model": "gpt-4o-mini",
+    "movie": "Citizen Kane",
+    "metrics": {
+      "Groundedness": 0,
+      "Relevance": 5,
+      "Coherence": 4
+    },
+    "error": null
+  }
+]

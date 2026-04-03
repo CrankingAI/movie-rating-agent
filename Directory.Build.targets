@@ -1,0 +1,19 @@
+<Project>
+
+  <!-- Embed the git commit hash as assembly metadata (separate from version) -->
+  <Target Name="SetGitCommitHash" BeforeTargets="GetAssemblyAttributes;GenerateAssemblyInfo;CoreCompile" Condition="'$(DesignTimeBuild)' != 'true'">
+    <Exec Command="git -C &quot;$(MSBuildThisFileDirectory)&quot; rev-parse HEAD" ConsoleToMsBuild="true" StandardOutputImportance="low" IgnoreExitCode="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitHash" />
+    </Exec>
+    <PropertyGroup>
+      <GitCommitHash Condition="'$(GitCommitHash)' == ''">unknown</GitCommitHash>
+    </PropertyGroup>
+    <ItemGroup>
+      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+        <_Parameter1>CommitHash</_Parameter1>
+        <_Parameter2>$(GitCommitHash)</_Parameter2>
+      </AssemblyAttribute>
+    </ItemGroup>
+  </Target>
+
+</Project>

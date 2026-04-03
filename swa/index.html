@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Rating Agent</title>
+    <style>
+        :root {
+            --bg: #0f0f14;
+            --surface: #1a1a24;
+            --surface2: #242434;
+            --accent: #6c63ff;
+            --accent-hover: #7c74ff;
+            --text: #e8e8f0;
+            --text-muted: #8888a0;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --gold: #ffd700;
+            --radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header { text-align: center; padding: 3rem 1rem 1rem; }
+        header h1 {
+            font-size: 2rem; font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--gold));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        header p { color: var(--text-muted); margin-top: 0.5rem; font-size: 0.95rem; }
+
+        /* ── Tabs ── */
+        .tabs {
+            display: flex; gap: 0; margin: 1rem 0 1.5rem;
+            border-bottom: 2px solid var(--surface2);
+        }
+        .tab-btn {
+            padding: 0.6rem 1.5rem; border: none; background: none;
+            color: var(--text-muted); font-size: 0.95rem; font-weight: 600;
+            cursor: pointer; border-bottom: 2px solid transparent;
+            margin-bottom: -2px; transition: all 0.2s;
+        }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .container { width: 100%; max-width: 700px; padding: 0 1rem; }
+
+        /* ── Rate tab ── */
+        .search-box { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+        .search-box input {
+            flex: 1; padding: 0.875rem 1.25rem; border: 2px solid var(--surface2);
+            border-radius: var(--radius); background: var(--surface); color: var(--text);
+            font-size: 1rem; outline: none; transition: border-color 0.2s;
+        }
+        .search-box input:focus { border-color: var(--accent); }
+        .search-box input::placeholder { color: var(--text-muted); }
+        .search-box button {
+            padding: 0.875rem 1.5rem; border: none; border-radius: var(--radius);
+            background: var(--accent); color: white; font-size: 1rem; font-weight: 600;
+            cursor: pointer; transition: background 0.2s; white-space: nowrap;
+        }
+        .search-box button:hover:not(:disabled) { background: var(--accent-hover); }
+        .search-box button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .status { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.95rem; }
+        .spinner {
+            display: inline-block; width: 20px; height: 20px;
+            border: 2px solid var(--surface2); border-top-color: var(--accent);
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+            margin-right: 0.5rem; vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .result-card { background: var(--surface); border-radius: var(--radius); padding: 2rem; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+        .movie-title { font-size: 1.25rem; font-weight: 600; }
+        .score-badge {
+            font-size: 2rem; font-weight: 800; width: 72px; height: 72px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;
+        }
+        .score-high { background: linear-gradient(135deg, #4caf50, #2e7d32); }
+        .score-mid { background: linear-gradient(135deg, #ff9800, #e65100); }
+        .score-low { background: linear-gradient(135deg, #f44336, #b71c1c); }
+        .sub-scores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+        .sub-score { background: var(--surface2); border-radius: 8px; padding: 0.75rem; text-align: center; }
+        .sub-score-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .sub-score-value { font-size: 1.5rem; font-weight: 700; margin-top: 0.25rem; }
+        .reasoning { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem; padding: 1rem; background: var(--surface2); border-radius: 8px; }
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .pros-cons h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+        .pros h3 { color: var(--success); } .cons h3 { color: var(--error); }
+        .pros-cons ul { list-style: none; font-size: 0.85rem; line-height: 1.6; color: var(--text-muted); }
+        .pros-cons li::before { margin-right: 0.4rem; }
+        .pros li::before { content: "+"; color: var(--success); font-weight: bold; }
+        .cons li::before { content: "-"; color: var(--error); font-weight: bold; }
+        .movie-info-link { font-size: 0.8rem; color: var(--accent); text-decoration: none; opacity: 0.8; transition: opacity 0.2s; }
+        .movie-info-link:hover { opacity: 1; text-decoration: underline; }
+        .error { background: rgba(244, 67, 54, 0.1); border: 1px solid var(--error); color: var(--error); padding: 1rem; border-radius: var(--radius); text-align: center; }
+
+        /* ── Learn tab ── */
+        .learn-section { margin-bottom: 2rem; }
+        .learn-section h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text); }
+        .learn-section p, .learn-section li { font-size: 0.9rem; line-height: 1.7; color: var(--text-muted); }
+        .learn-section ul { list-style: disc; padding-left: 1.25rem; margin-top: 0.5rem; }
+        .learn-section li { margin-bottom: 0.25rem; }
+
+        .workflow-diagram {
+            background: var(--surface); border-radius: var(--radius); padding: 1.5rem;
+            margin: 1rem 0; text-align: center; overflow-x: auto;
+        }
+        .workflow-diagram img, .workflow-diagram svg { max-width: 100%; height: auto; }
+
+        .weight-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.9rem; }
+        .weight-table th, .weight-table td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--surface2); }
+        .weight-table th { color: var(--text); font-weight: 600; }
+        .weight-table td { color: var(--text-muted); }
+        .weight-table .weight { color: var(--accent); font-weight: 600; }
+
+        .tech-badge {
+            display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px;
+            background: var(--surface2); color: var(--text-muted); font-size: 0.75rem;
+            margin: 0.15rem; font-family: monospace;
+        }
+
+        .probe-buttons { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+        .probe-btn {
+            padding: 0.5rem 1rem; border: 1px solid var(--surface2); border-radius: 6px;
+            background: var(--surface); color: var(--text-muted); font-size: 0.8rem;
+            font-family: monospace; cursor: pointer; transition: all 0.2s;
+        }
+        .probe-btn:hover { border-color: var(--accent); color: var(--text); }
+        .probe-result {
+            background: var(--surface); border-radius: 8px; padding: 0.75rem 1rem;
+            font-size: 0.8rem; font-family: monospace; color: var(--text-muted);
+            white-space: pre-wrap; word-break: break-all; margin-bottom: 0.5rem;
+            display: none; border-left: 3px solid var(--accent);
+        }
+        .probe-result.visible { display: block; animation: fadeIn 0.2s ease; }
+
+        /* ── Footer ── */
+        footer { margin-top: auto; padding: 2rem; text-align: center; color: var(--text-muted); font-size: 0.8rem; }
+        .version { font-size: 0.7rem; color: var(--surface2); margin-top: 0.5rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Movie Rating Agent</h1>
+        <p>AI-powered movie greatness scoring (0-100)</p>
+    </header>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('rate')">Rate</button>
+            <button class="tab-btn" onclick="switchTab('learn')">Learn</button>
+        </div>
+
+        <!-- Rate Tab -->
+        <div id="tab-rate" class="tab-panel active">
+            <div class="search-box">
+                <input type="text" id="movieInput" placeholder="Enter a movie title..." autofocus />
+                <button id="rateBtn" onclick="rateMovie()">Rate It</button>
+            </div>
+            <div id="output"></div>
+        </div>
+
+        <!-- Learn Tab -->
+        <div id="tab-learn" class="tab-panel">
+            <div class="learn-section">
+                <h2>How It Works</h2>
+                <p>The Movie Rating Agent evaluates films using a fan-out/fan-in workflow powered by the
+                   <strong>Microsoft.Extensions.AI Agent Framework</strong>. When you submit a movie title,
+                   the agent resolves it to a canonical title with release year, then runs three independent
+                   LLM-powered scorers in parallel:</p>
+            </div>
+
+            <div class="learn-section">
+                <h2>Agent Workflow</h2>
+                <div class="workflow-diagram">
+                    <img src="agent-workflow.svg" alt="Agent workflow: Start fans out to 3 scorers, results merge through ProsConsRollup into WeightedScoreRollup" />
+                </div>
+            </div>
+
+            <div class="learn-section">
+                <h2>Job Lifecycle</h2>
+                <p>Jobs use an async <strong>HTTP 202 Accepted</strong> pattern. The client submits a movie,
+                   receives a job ID immediately, and polls until the agent finishes. The agent runs on a
+                   queue trigger &mdash; decoupled from the HTTP request &mdash; with all state persisted in Blob Storage.</p>
+                <div class="workflow-diagram">
+                    <img src="job-lifecycle.svg" alt="Sequence diagram: POST /api/jobs returns 202, queue triggers the agent, client polls GET /api/jobs/{jobId} until Completed" />
+                </div>
+            </div>
+
+            <div class="learn-section">
+                <h2>Scoring Dimensions</h2>
+                <table class="weight-table">
+                    <tr><th>Scorer</th><th>What it evaluates</th><th>Weight</th></tr>
+                    <tr>
+                        <td>PopularityScorer</td>
+                        <td>Box office, audience reach, streaming popularity, mainstream recognition</td>
+                        <td class="weight">30%</td>
+                    </tr>
+                    <tr>
+                        <td>ArtisticValueScorer</td>
+                        <td>Cinematography, direction, acting, screenplay, awards</td>
+                        <td class="weight">40%</td>
+                    </tr>
+                    <tr>
+                        <td>IconicnessScorer</td>
+                        <td>Memorable quotes, iconic scenes, cultural impact, influence on cinema</td>
+                        <td class="weight">30%</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="learn-section">
+                <h2>The Pipeline</h2>
+                <ul>
+                    <li><strong>Title Resolution</strong> &mdash; Normalizes your input to a canonical movie title and looks up the release year</li>
+                    <li><strong>Fan-out</strong> &mdash; Three scorers run in parallel, each returning a 0-100 score plus pros and cons</li>
+                    <li><strong>Fan-in Barrier</strong> &mdash; Waits for all three scorers to complete</li>
+                    <li><strong>ProsConsRollup</strong> &mdash; LLM merges, deduplicates, and identifies conflicts across scorer outputs</li>
+                    <li><strong>WeightedScoreRollup</strong> &mdash; Pure computation: 30/40/30 weighted average produces the final score</li>
+                </ul>
+            </div>
+
+            <div class="learn-section">
+                <h2>Tech Stack</h2>
+                <p>
+                    <span class="tech-badge">.NET 10</span>
+                    <span class="tech-badge">Agent Framework</span>
+                    <span class="tech-badge">Microsoft Foundry</span>
+                    <span class="tech-badge">gpt-5.4</span>
+                    <span class="tech-badge">Azure Functions</span>
+                    <span class="tech-badge">Azure Static Web Apps</span>
+                    <span class="tech-badge">Azure Storage</span>
+                    <span class="tech-badge">OpenTelemetry</span>
+                    <span class="tech-badge">.NET Aspire</span>
+                    <span class="tech-badge">Bicep IaC</span>
+                </p>
+            </div>
+
+            <div class="learn-section">
+                <h2>Health Probes</h2>
+                <div class="probe-buttons">
+                    <button class="probe-btn" onclick="callProbe('readyz', 'readyz-result')">GET /api/readyz</button>
+                    <button class="probe-btn" onclick="callProbe('livez', 'livez-result')">GET /api/livez</button>
+                </div>
+                <pre class="probe-result" id="readyz-result"></pre>
+                <pre class="probe-result" id="livez-result"></pre>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        Powered by Agent Framework &bull; Microsoft Foundry &bull; Microsoft Azure
+        <br/>
+        <a href="https://github.com/CrankingAI/movie-rating-agent" style="color: var(--accent); text-decoration: none;">github.com/CrankingAI/movie-rating-agent</a>
+        <div class="version" id="version"></div>
+    </footer>
+
+    <script>
+        const API_BASE = window.location.hostname === 'localhost'
+            ? 'http://localhost:7071/api'
+            : '/api';
+
+        const input = document.getElementById('movieInput');
+        const btn = document.getElementById('rateBtn');
+
+        fetch(`${API_BASE}/readyz`).then(r => r.json()).then(d => {
+            const hash = d.commit && d.commit !== 'unknown' ? ` (${d.commit.substring(0, 7)})` : '';
+            document.getElementById('version').textContent = `v${d.version}${hash}`;
+        }).catch(() => {});
+        const output = document.getElementById('output');
+
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') rateMovie(); });
+
+        function switchTab(name) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+            document.getElementById(`tab-${name}`).classList.add('active');
+            if (name === 'rate') input.focus();
+        }
+
+        async function callProbe(endpoint, resultId) {
+            const el = document.getElementById(resultId);
+            el.textContent = 'Loading...';
+            el.classList.add('visible');
+            try {
+                const res = await fetch(`${API_BASE}/${endpoint}`);
+                const data = await res.json();
+                el.textContent = `GET /api/${endpoint}  ${res.status}\n\n${JSON.stringify(data, null, 2)}`;
+            } catch (err) {
+                el.textContent = `GET /api/${endpoint}  ERROR\n\n${err.message}`;
+            }
+        }
+
+        async function rateMovie() {
+            const movie = input.value.trim();
+            if (!movie) return;
+            btn.disabled = true;
+            output.innerHTML = `<div class="status"><span class="spinner"></span>Submitting "${movie}"...</div>`;
+            try {
+                const submitRes = await fetch(`${API_BASE}/jobs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic: movie })
+                });
+                if (!submitRes.ok) throw new Error(`Submit failed: ${submitRes.status}`);
+                const { jobId } = await submitRes.json();
+                output.innerHTML = `<div class="status"><span class="spinner"></span>Processing job ${jobId.substring(0, 8)}...</div>`;
+                while (true) {
+                    await new Promise(r => setTimeout(r, 2000));
+                    const pollRes = await fetch(`${API_BASE}/jobs/${jobId}`);
+                    if (!pollRes.ok) throw new Error(`Poll failed: ${pollRes.status}`);
+                    const data = await pollRes.json();
+                    const status = data.meta?.Status ?? data.meta?.status;
+                    if (status === 2 || status === 'Completed') { renderResult(data.result); break; }
+                    else if (status === 3 || status === 'Failed') { throw new Error(data.meta?.Error || data.meta?.error || 'Job failed'); }
+                    output.innerHTML = `<div class="status"><span class="spinner"></span>Still processing...</div>`;
+                }
+            } catch (err) {
+                output.innerHTML = `<div class="error">${err.message}</div>`;
+            } finally { btn.disabled = false; }
+        }
+
+        function renderResult(r) {
+            if (!r) { output.innerHTML = '<div class="error">No result returned</div>'; return; }
+            const score = r.Score ?? r.score;
+            const scoreClass = score >= 70 ? 'score-high' : score >= 40 ? 'score-mid' : 'score-low';
+            const ratedMovie = r.RatedMovie ?? r.ratedMovie ?? '';
+            const releaseYear = r.ReleaseYear ?? r.releaseYear;
+            const displayTitle = releaseYear ? `${ratedMovie} (${releaseYear})` : ratedMovie;
+            const infoUrl = r.InfoUrl ?? r.infoUrl;
+            const reasoning = r.Reasoning ?? r.reasoning ?? '';
+            const subs = r.SubScores ?? r.subScores;
+            const pros = r.Pros ?? r.pros ?? [];
+            const cons = r.Cons ?? r.cons ?? [];
+            const infoLinkHtml = infoUrl
+                ? `<a href="${infoUrl}" target="_blank" rel="noopener" class="movie-info-link">More about this film &#8599;</a>` : '';
+            let html = `<div class="result-card"><div class="result-header">
+                <div><div class="movie-title">${displayTitle}</div>${infoLinkHtml}</div>
+                <div class="score-badge ${scoreClass}">${score}</div></div>`;
+            if (subs) {
+                html += `<div class="sub-scores">
+                    <div class="sub-score"><div class="sub-score-label">Popularity</div><div class="sub-score-value">${subs.Popularity ?? subs.popularity}</div></div>
+                    <div class="sub-score"><div class="sub-score-label">Artistic Value</div><div class="sub-score-value">${subs.ArtisticValue ?? subs.artisticValue}</div></div>
+                    <div class="sub-score"><div class="sub-score-label">Iconicness</div><div class="sub-score-value">${subs.Iconicness ?? subs.iconicness}</div></div></div>`;
+            }
+            html += `<div class="reasoning">${reasoning}</div>`;
+            if (pros.length || cons.length) {
+                html += `<div class="pros-cons">
+                    <div class="pros"><h3>Pros</h3><ul>${pros.map(p => `<li>${p}</li>`).join('')}</ul></div>
+                    <div class="cons"><h3>Cons</h3><ul>${cons.map(c => `<li>${c}</li>`).join('')}</ul></div></div>`;
+            }
+            html += '</div>';
+            output.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

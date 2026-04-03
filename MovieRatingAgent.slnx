@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/aspire/">
+    <Project Path="aspire/MovieRatingAgent.AppHost/MovieRatingAgent.AppHost.csproj" />
+    <Project Path="aspire/MovieRatingAgent.ServiceDefaults/MovieRatingAgent.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/MovieRatingAgent.Agent/MovieRatingAgent.Agent.csproj" />
+    <Project Path="src/MovieRatingAgent.Core/MovieRatingAgent.Core.csproj" />
+    <Project Path="src/MovieRatingAgent.Functions/MovieRatingAgent.Functions.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MovieRatingAgent.Eval/MovieRatingAgent.Eval.csproj" />
+    <Project Path="tests/MovieRatingAgent.Tests/MovieRatingAgent.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/MovieRatingAgent.BatchEval/MovieRatingAgent.BatchEval.csproj" />
+  </Folder>
+</Solution>
