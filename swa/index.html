@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movie Rating Agent</title>
+    <title>Movie Rating Agent — www.movieratingagent.com</title>
+    <link rel="canonical" href="https://www.movieratingagent.com/" />
+    <meta name="description" content="AI-powered movie greatness scoring on a 0-100 scale using a multi-dimensional evaluation framework. Try it at www.movieratingagent.com." />
     <style>
         :root {
             --bg: #0f0f14;
@@ -39,6 +41,11 @@
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         header p { color: var(--text-muted); margin-top: 0.5rem; font-size: 0.95rem; }
+        header .domain-link {
+            display: inline-block; margin-top: 0.35rem; font-size: 0.8rem;
+            color: var(--accent); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;
+        }
+        header .domain-link:hover { opacity: 1; text-decoration: underline; }
 
         /* ── Tabs ── */
         .tabs {
@@ -160,6 +167,7 @@
     <header>
         <h1>Movie Rating Agent</h1>
         <p>AI-powered movie greatness scoring (0-100)</p>
+        <a href="https://www.movieratingagent.com/" class="domain-link">www.movieratingagent.com</a>
     </header>
 
     <div class="container">
@@ -266,6 +274,8 @@
     </div>
 
     <footer>
+        <a href="https://www.movieratingagent.com/" style="color: var(--accent); text-decoration: none; font-weight: 600;">www.movieratingagent.com</a>
+        <br/>
         Powered by Agent Framework &bull; Microsoft Foundry &bull; Microsoft Azure
         <br/>
         <a href="https://github.com/CrankingAI/movie-rating-agent" style="color: var(--accent); text-decoration: none;">github.com/CrankingAI/movie-rating-agent</a>
