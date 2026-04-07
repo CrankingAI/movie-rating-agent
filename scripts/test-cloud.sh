@@ -1,12 +1,32 @@
 #!/usr/bin/env bash
+# ---------------------------------------------------------------------------
+# test-cloud.sh — Submit a movie to the deployed SWA and poll for the result.
+#
+# Usage:
+#   ./scripts/test-cloud.sh                       # default: The Godfather
+#   ./scripts/test-cloud.sh "Heat"                # custom movie
+#   ./scripts/test-cloud.sh "Heat" custom.host    # custom host (e.g. www.movieratingagent.com)
+#
+# Hits the SWA hostname (NOT the Function App hostname) because the linked
+# backend lockdown only allows traffic that comes through the SWA proxy.
+# ---------------------------------------------------------------------------
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${REPO_ROOT}/scripts/deploy-config.sh"
 
 MOVIE="${1:-The Godfather}"
-FUNC_HOST="${2:-${FUNCTION_HOST}}"
-BASE="https://${FUNC_HOST}/api/jobs"
+HOST="${2:-}"
+
+if [[ -z "$HOST" ]]; then
+  HOST="$(az staticwebapp show \
+    --subscription "$AZURE_SUBSCRIPTION_ID" \
+    --name "$SWA_NAME" \
+    --resource-group "$RESOURCE_GROUP" \
+    --query defaultHostname -o tsv)"
+fi
+
+BASE="https://${HOST}/api/jobs"
 
 echo "==> Submitting: \"${MOVIE}\" to ${BASE}"
 
@@ -14,7 +34,8 @@ SUBMIT_RESPONSE="$(curl -s -X POST "${BASE}" -H 'Content-Type: application/json'
 JOB_ID="$(echo "$SUBMIT_RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('jobId',''))" 2>/dev/null)" || true
 
 if [[ -z "$JOB_ID" ]]; then
-  echo "Error: Failed to submit job."
+  echo "Error: Failed to submit job. Response was:"
+  echo "$SUBMIT_RESPONSE"
   exit 1
 fi
 

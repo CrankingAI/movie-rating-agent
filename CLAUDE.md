@@ -213,26 +213,55 @@ npx @azure/static-web-apps-cli deploy ./swa --deployment-token "$DEPLOY_TOKEN" -
 
 ## Azure Resources (dev environment)
 
-All resources in `rg-movie-rating-agent-dev` (eastus2):
+All resources in `rg-movie-rating-agent-dev` (eastus2) in subscription
+`BillDevPlayground` (`379168a0-b9fc-4fa0-a3cd-ce32ab20ee70`):
 
-- **AI Services**: `ai-movie-rating-agent-dev` — 3 deployments (gpt-5.4, gpt-4o, gpt-4o-mini)
-- **Storage**: `stmtatdev` — blob container `jobs`, queue `job-requests`
-- **Function App**: `func-movie-rating-agent-dev` — .NET 10 isolated, AlwaysOn, CORS `*`
-- **Static Web App**: `swa-movie-rating-agent-dev` — Standard tier
-- **App Insights**: `appi-movie-rating-agent-dev`
+- **AI Services**: `ai-movie-rating-agent-dev-<token>` — 2 GA deployments
+  (gpt-4o, gpt-4o-mini); gpt-5.4 is opt-in via Bicep `deployGpt54=true`
+- **Storage**: `stmradev<token>` — blob container `jobs`, queue `job-requests`
+- **Function App**: `func-movie-rating-agent-dev-<token>` — .NET 10 isolated, AlwaysOn
+- **Static Web App**: `swa-movie-rating-agent-dev` — Standard tier, linked-backend → Function App
+- **App Insights**: `appi-movie-rating-agent-dev` + "Movie Rating Agent — Gen AI" workbook
 - **Log Analytics**: `log-movie-rating-agent-dev`
+
+`<token>` is a 6-char deterministic suffix derived from the subscription ID
+(`take(replace(subscription().subscriptionId, '-', ''), 6)`); for
+BillDevPlayground it resolves to `379168`. Bash equivalent:
+`echo "$AZURE_SUBSCRIPTION_ID" | tr -d - | cut -c1-6`. Re-deploys are
+idempotent because the same sub always produces the same token, and two
+different subs can deploy the same Bicep without collision.
+
+## Deploys
+
+The canonical deploy path is the GitHub Actions workflow at
+`.github/workflows/deploy.yml`. Push to `main` (path filters route SWA-only
+or Functions-only changes to the right job) or trigger manually:
+
+```bash
+gh workflow run deploy.yml -f target=all
+gh workflow run deploy.yml -f target=infra
+gh workflow run deploy.yml -f target=functions
+gh workflow run deploy.yml -f target=swa
+gh workflow run deploy.yml -f target=infra -f with_domain=true
+```
+
+`scripts/deploy.sh` is preserved as a break-glass / local-only fallback.
+See `TRANSITION.md` for the full BillDevPlayground bring-up + DNS cutover
+runbook.
 
 ## Scripts
 
 | Script | Purpose |
 |--------|---------|
-| `deploy.sh` | Deploy infra (Bicep) + code to dev. Flags: `--infra-only`, `--code-only` |
+| `warmup-new-sub.sh` | Prepare a fresh sub: register providers, verify model availability |
 | `setup-oidc.sh` | Create Entra app reg + OIDC federated creds + GitHub secrets |
+| `setup-custom-domain.sh` | Walk the apex/www validation handshake on Cloudflare |
+| `deploy.sh` | EMERGENCY-ONLY local deploy. Prefer GitHub Actions. |
 | `run-local.sh` | Start Aspire AppHost for local dev |
 | `run-eval.sh` | Run xUnit eval tests (range, stability, quality) |
 | `run-batch-eval.sh` | Run batch eval matrix (fetches creds from Azure) |
 | `test-local.sh` | Submit job to local Functions, poll for result |
-| `test-cloud.sh` | Submit job to deployed Functions, poll for result |
+| `test-cloud.sh` | Submit job to deployed SWA, poll for result |
 | `set-local-creds.sh` | Fetch Foundry creds from Azure, set as Aspire user-secrets |
 | `start-docker.sh` | Ensure Docker Desktop is running |
 | `view-otel.sh` | View OTel telemetry (Azure Monitor or local Aspire export) |

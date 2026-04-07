@@ -54,6 +54,8 @@ if [[ "$MODE" == "local" ]]; then
   fi
 
   echo "==> Aspire local OTel export (${OTEL_DIR})"
+  echo "    For interactive exploration, open the Aspire dashboard:"
+  echo "      https://localhost:15888"
   echo ""
 
   for FILE in traces.jsonl metrics.jsonl logs.jsonl; do
@@ -142,6 +144,7 @@ run_query() {
 
   echo "── ${title} ──────────────────────────────────────────────"
   az monitor app-insights query \
+    --subscription "$AZURE_SUBSCRIPTION_ID" \
     --app "$APPI_NAME" \
     --resource-group "$RESOURCE_GROUP" \
     --analytics-query "$query" \

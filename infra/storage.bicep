@@ -4,11 +4,18 @@ param environmentName string
 @description('Azure region for all resources.')
 param location string
 
-var storageAccountName = 'stmra${environmentName}'
+@description('Tags applied to all resources in this module.')
+param tags object = {}
+
+@description('Short, deterministic suffix used to make the storage account name globally unique. See main.bicep for derivation.')
+param resourceToken string
+
+var storageAccountName = 'stmra${environmentName}${resourceToken}'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageAccountName
   location: location
+  tags: tags
   kind: 'StorageV2'
   sku: {
     name: 'Standard_LRS'

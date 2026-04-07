@@ -35,9 +35,15 @@ fi
 export MOVIE_EVAL_RUNS="$RUNS"
 
 if [[ -z "${FOUNDRY_ENDPOINT:-}" || -z "${FOUNDRY_API_KEY:-}" ]]; then
-  echo "==> Fetching Foundry credentials from Azure..."
-  export FOUNDRY_ENDPOINT="$(az cognitiveservices account show --name "${AI_NAME}" --resource-group "${RESOURCE_GROUP}" --query properties.endpoint -o tsv)"
-  export FOUNDRY_API_KEY="$(az cognitiveservices account keys list --name "${AI_NAME}" --resource-group "${RESOURCE_GROUP}" --query key1 -o tsv)"
+  echo "==> Fetching Foundry credentials from ${AZURE_SUBSCRIPTION_NAME:-$AZURE_SUBSCRIPTION_ID}..."
+  export FOUNDRY_ENDPOINT="$(az cognitiveservices account show \
+    --subscription "$AZURE_SUBSCRIPTION_ID" \
+    --name "${AI_NAME}" --resource-group "${RESOURCE_GROUP}" \
+    --query properties.endpoint -o tsv)"
+  export FOUNDRY_API_KEY="$(az cognitiveservices account keys list \
+    --subscription "$AZURE_SUBSCRIPTION_ID" \
+    --name "${AI_NAME}" --resource-group "${RESOURCE_GROUP}" \
+    --query key1 -o tsv)"
   echo "    Endpoint: ${FOUNDRY_ENDPOINT}"
 fi
 

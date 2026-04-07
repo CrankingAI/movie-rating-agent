@@ -1,18 +1,86 @@
 name: Deploy
 
+# ─────────────────────────────────────────────────────────────────────────
+# Split deployment workflow.
+#
+# Path-aware: pushes that only touch swa/** trigger the SWA job, pushes that
+# only touch src/** + tests/** trigger the Function App job, and pushes that
+# touch infra/** trigger the Bicep job. Each job is also independently
+# runnable from the workflow_dispatch UI via the `target` input.
+#
+# All jobs use OIDC against the BillDevPlayground subscription. The
+# AZURE_SUBSCRIPTION_ID secret is set by scripts/setup-oidc.sh.
+# ─────────────────────────────────────────────────────────────────────────
+
 on:
   push:
     branches: [main]
+    paths:
+      - 'infra/**'
+      - 'src/**'
+      - 'swa/**'
+      - 'aspire/**'
+      - 'scripts/deploy*.sh'
+      - '.github/workflows/deploy.yml'
+      - 'VERSION'
   workflow_dispatch:
+    inputs:
+      target:
+        description: 'What to deploy'
+        type: choice
+        default: all
+        options:
+          - all
+          - infra
+          - functions
+          - swa
+      with_domain:
+        description: 'Bind custom domain (movieratingagent.com) on infra deploy'
+        type: boolean
+        default: false
 
 permissions:
   id-token: write
   contents: read
 
-jobs:
-  deploy-infra:
-    runs-on: ubuntu-latest
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
 
+jobs:
+  # ── Filter ────────────────────────────────────────────────────────────
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      infra: ${{ steps.filter.outputs.infra }}
+      functions: ${{ steps.filter.outputs.functions }}
+      swa: ${{ steps.filter.outputs.swa }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            infra:
+              - 'infra/**'
+              - 'scripts/deploy*.sh'
+              - '.github/workflows/deploy.yml'
+            functions:
+              - 'src/**'
+              - 'aspire/MovieRatingAgent.ServiceDefaults/**'
+              - 'VERSION'
+              - 'Directory.Build.props'
+              - 'Directory.Build.targets'
+            swa:
+              - 'swa/**'
+
+  # ── Infrastructure (Bicep) ────────────────────────────────────────────
+  deploy-infra:
+    needs: changes
+    if: |
+      github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'infra') ||
+      github.event_name == 'push' && needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -26,7 +94,20 @@ jobs:
             echo "AZURE_FUNCTION_APP=${FUNCTION_APP}"
             echo "AZURE_SWA_NAME=${SWA_NAME}"
             echo "AZURE_SWA_DEPLOY_ENV=${SWA_DEPLOY_ENV}"
+            echo "BICEP_FILE=${BICEP_FILE}"
+            echo "BICEP_PARAMS=${BICEP_PARAMS}"
+            echo "BICEP_PARAMS_WITH_DOMAIN=${BICEP_PARAMS_WITH_DOMAIN}"
           } >> "$GITHUB_ENV"
+
+      - name: Choose params file
+        id: params
+        shell: bash
+        run: |
+          if [[ "${{ inputs.with_domain }}" == "true" ]]; then
+            echo "file=${BICEP_PARAMS_WITH_DOMAIN}" >> "$GITHUB_OUTPUT"
+          else
+            echo "file=${BICEP_PARAMS}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Azure Login (OIDC)
         uses: azure/login@v2
@@ -35,19 +116,24 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy Bicep
+      - name: Deploy Bicep (${{ steps.params.outputs.file }})
         uses: azure/arm-deploy@v2
         with:
           scope: subscription
           region: ${{ env.AZURE_LOCATION }}
           deploymentName: movie-rating-agent-${{ github.run_id }}
-          template: infra/main.bicep
-          parameters: infra/main.bicepparam
+          template: ${{ env.BICEP_FILE }}
+          parameters: ${{ steps.params.outputs.file }}
 
-  deploy-code:
+  # ── Function App (code) ───────────────────────────────────────────────
+  deploy-functions:
+    needs: [changes, deploy-infra]
+    if: |
+      always() && !cancelled() && needs.deploy-infra.result != 'failure' && (
+        github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'functions') ||
+        github.event_name == 'push' && (needs.changes.outputs.functions == 'true' || needs.changes.outputs.infra == 'true')
+      )
     runs-on: ubuntu-latest
-    needs: deploy-infra
-
     steps:
       - uses: actions/checkout@v4
 
@@ -58,8 +144,6 @@ jobs:
           {
             echo "AZURE_RESOURCE_GROUP=${RESOURCE_GROUP}"
             echo "AZURE_FUNCTION_APP=${FUNCTION_APP}"
-            echo "AZURE_SWA_NAME=${SWA_NAME}"
-            echo "AZURE_SWA_DEPLOY_ENV=${SWA_DEPLOY_ENV}"
           } >> "$GITHUB_ENV"
 
       - name: Read version
@@ -87,6 +171,56 @@ jobs:
           app-name: ${{ env.AZURE_FUNCTION_APP }}
           package: ./publish
 
+      - name: Verify /api/readyz reports the deployed version
+        shell: bash
+        run: |
+          EXPECTED="${{ steps.version.outputs.version }}"
+          for attempt in $(seq 1 12); do
+            READYZ=$(curl -sf "https://${AZURE_FUNCTION_APP}.azurewebsites.net/api/readyz" || true)
+            DEPLOYED=$(echo "$READYZ" | python3 -c "import sys,json; print(json.load(sys.stdin).get('version',''))" 2>/dev/null || true)
+            if [ "$DEPLOYED" = "$EXPECTED" ]; then
+              echo "Verified Function App: v${DEPLOYED}"
+              exit 0
+            fi
+            echo "Waiting for Function App readyz (${attempt}/12)..."
+            sleep 10
+          done
+          echo "::error::Function App did not report expected version v${EXPECTED}"
+          exit 1
+
+  # ── Static Web App ────────────────────────────────────────────────────
+  deploy-swa:
+    needs: [changes, deploy-infra]
+    if: |
+      always() && !cancelled() && needs.deploy-infra.result != 'failure' && (
+        github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'swa') ||
+        github.event_name == 'push' && (needs.changes.outputs.swa == 'true' || needs.changes.outputs.infra == 'true')
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load deploy config
+        shell: bash
+        run: |
+          source scripts/deploy-config.sh
+          {
+            echo "AZURE_RESOURCE_GROUP=${RESOURCE_GROUP}"
+            echo "AZURE_SWA_NAME=${SWA_NAME}"
+            echo "AZURE_SWA_DEPLOY_ENV=${SWA_DEPLOY_ENV}"
+          } >> "$GITHUB_ENV"
+
+      - name: Read version
+        id: version
+        run: echo "version=$(cat VERSION | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Deploy SWA
         run: |
           DEPLOY_TOKEN=$(az staticwebapp secrets list \
@@ -97,7 +231,7 @@ jobs:
             --deployment-token "$DEPLOY_TOKEN" \
             --env "${{ env.AZURE_SWA_DEPLOY_ENV }}"
 
-      - name: Verify SWA route and backend
+      - name: Verify SWA route and linked backend
         shell: bash
         run: |
           EXPECTED="${{ steps.version.outputs.version }}"
