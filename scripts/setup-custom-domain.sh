@@ -21,15 +21,38 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${REPO_ROOT}/scripts/deploy-config.sh"
 
+usage() {
+  sed -n '2,20p' "$0"
+  exit 0
+}
+
 DOMAIN="${CUSTOM_DOMAIN:-movieratingagent.com}"
 WWW_DOMAIN="www.${DOMAIN}"
 PRINT_ONLY=false
 
-for arg in "$@"; do
-  case "$arg" in
-    --print-records-only) PRINT_ONLY=true ;;
-    --domain) shift; DOMAIN="$1"; WWW_DOMAIN="www.${DOMAIN}" ;;
-    --help|-h) sed -n '2,20p' "$0"; exit 0 ;;
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --print-records-only)
+      PRINT_ONLY=true
+      shift
+      ;;
+    --domain)
+      shift
+      if [[ $# -eq 0 ]]; then
+        echo "Error: --domain requires a value."
+        usage
+      fi
+      DOMAIN="$1"
+      WWW_DOMAIN="www.${DOMAIN}"
+      shift
+      ;;
+    --help|-h|help)
+      usage
+      ;;
+    *)
+      echo "Error: unknown option: $1"
+      usage
+      ;;
   esac
 done
 
@@ -86,10 +109,13 @@ if [[ "$PRINT_ONLY" == true ]]; then
 fi
 
 read -r -p "Have you created the apex + www CNAME records in Cloudflare? [y/N] " confirm
-if [[ "${confirm,,}" != "y" ]]; then
-  echo "==> Aborted. Re-run after the records are in place."
-  exit 1
-fi
+case "$confirm" in
+  [Yy]) ;;
+  *)
+    echo "==> Aborted. Re-run after the records are in place."
+    exit 1
+    ;;
+esac
 
 # ── Step 3: kick off apex (dns-txt-token) and read the validation token ──
 echo "==> Creating apex custom domain (${DOMAIN}) on SWA..."
