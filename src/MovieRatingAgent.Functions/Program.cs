@@ -1,14 +1,24 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Builder;
+using Microsoft.Azure.Functions.Worker.OpenTelemetry;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MovieRatingAgent.Agent;
 using MovieRatingAgent.Core.Services;
+using OpenTelemetry;
 
 var builder = FunctionsApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+
+// Wire the worker invocation pipeline through OpenTelemetry. Without this,
+// ActivitySource spans created during a function invocation (the
+// Microsoft.Extensions.AI gen_ai chat spans, scorer activities, agent workflow,
+// HttpClient calls to Azure OpenAI, etc.) are NOT captured by the worker's
+// OTel exporters — only startup events and the gRPC stream show up.
+builder.Services.AddOpenTelemetry().UseFunctionsWorkerDefaults();
 
 var storageConnectionString = builder.Configuration["AzureWebJobsStorage"]
     ?? "UseDevelopmentStorage=true";

@@ -13,6 +13,11 @@
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.*" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.*" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.*" />
+    <!-- Wire the worker invocation pipeline through OpenTelemetry. Without this,
+         ActivitySource spans created during a function invocation (e.g. the
+         Microsoft.Extensions.AI gen_ai chat spans) are NOT captured by the
+         worker's OTel exporters — only startup events and the gRPC stream show up. -->
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.OpenTelemetry" Version="1.*" />
 
   </ItemGroup>
 
