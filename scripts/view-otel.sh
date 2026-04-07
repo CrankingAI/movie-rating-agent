@@ -165,14 +165,17 @@ run_query() {
 
 if [[ "$GENAI_FOCUS" == true ]]; then
   # Gen AI focused queries
-  run_query "Gen AI Dependency Spans (last ${TIMESPAN})" \
-    "dependencies | where customDimensions has 'gen_ai' or type has 'gen_ai' or name has 'chat' or name has 'Scorer' or name has 'invoke_agent' | order by timestamp desc | take 20 | project timestamp, name, duration, customDimensions"
+  run_query "Gen AI Chat Spans (last ${TIMESPAN})" \
+    "dependencies | where name startswith 'chat ' | extend model = tostring(customDimensions['gen_ai.request.model']) | extend inTok = tostring(customDimensions['gen_ai.usage.input_tokens']) | extend outTok = tostring(customDimensions['gen_ai.usage.output_tokens']) | order by timestamp desc | take 20 | project timestamp, name, model, duration, inTok, outTok"
 
-  run_query "Agent Job Traces (last ${TIMESPAN})" \
-    "traces | where message has 'Job' or message has 'movie' or message has 'Score' | order by timestamp desc | take 20 | project timestamp, message, severityLevel"
+  run_query "Agent Workflow Spans (last ${TIMESPAN})" \
+    "dependencies | where name startswith 'invoke_agent' or name startswith 'workflow' or name startswith 'executor.process' | order by timestamp desc | take 20 | project timestamp, name, duration"
 
-  run_query "LLM Latency Summary (last ${TIMESPAN})" \
-    "dependencies | where name has 'chat' | summarize avg(duration), percentile(duration, 50), percentile(duration, 95), count() by name | order by avg_duration desc"
+  run_query "LLM Latency by Scorer (last ${TIMESPAN})" \
+    "dependencies | where name startswith 'chat ' | summarize calls=count(), avgMs=avg(duration), p50=percentile(duration, 50), p95=percentile(duration, 95) by name | order by calls desc"
+
+  run_query "Token Usage Summary (last ${TIMESPAN})" \
+    "dependencies | where name startswith 'chat ' | extend inTok = tolong(customDimensions['gen_ai.usage.input_tokens']) | extend outTok = tolong(customDimensions['gen_ai.usage.output_tokens']) | extend model = tostring(customDimensions['gen_ai.request.model']) | summarize calls=count(), totalIn=sum(inTok), totalOut=sum(outTok) by model | order by totalIn desc"
 
   run_query "Agent Errors (last ${TIMESPAN})" \
     "traces | where severityLevel >= 3 and (message has 'fail' or message has 'error' or message has 'exception') | order by timestamp desc | take 10 | project timestamp, message, severityLevel"

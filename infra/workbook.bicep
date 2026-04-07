@@ -59,9 +59,9 @@ var workbookContent = {
       type: 3
       content: {
         version: 'KqlItem/1.0'
-        query: 'dependencies\n| where customDimensions has "gen_ai" or name has "chat" or name has "Scorer" or name has "invoke_agent"\n| summarize calls = count(), avgMs = avg(duration), p95Ms = percentile(duration, 95), p99Ms = percentile(duration, 99) by name\n| order by calls desc'
+        query: 'dependencies\n| where name startswith "chat " or name startswith "invoke_agent " or name startswith "executor.process"\n| summarize calls = count(), avgMs = avg(duration), p95Ms = percentile(duration, 95), p99Ms = percentile(duration, 99) by name\n| order by calls desc'
         size: 0
-        title: 'Gen AI dependency latency by span name'
+        title: 'Gen AI / agent span latency'
         timeContext: { durationMs: 86400000 }
         timeContextFromParameter: 'TimeRange'
         queryType: 0
@@ -73,9 +73,9 @@ var workbookContent = {
       type: 3
       content: {
         version: 'KqlItem/1.0'
-        query: 'dependencies\n| where customDimensions has "gen_ai"\n| extend model = tostring(customDimensions["gen_ai.request.model"])\n| where isnotempty(model)\n| summarize calls = count(), avgMs = avg(duration) by model, bin(timestamp, 5m)\n| render timechart'
+        query: 'dependencies\n| where name startswith "chat "\n| extend model = tostring(customDimensions["gen_ai.request.model"])\n| where isnotempty(model)\n| summarize calls = count(), avgMs = avg(duration) by model, bin(timestamp, 5m)\n| render timechart'
         size: 0
-        title: 'Calls per model over time'
+        title: 'Chat completion calls per model over time'
         timeContext: { durationMs: 86400000 }
         timeContextFromParameter: 'TimeRange'
         queryType: 0
@@ -86,14 +86,27 @@ var workbookContent = {
       type: 3
       content: {
         version: 'KqlItem/1.0'
-        query: 'dependencies\n| where customDimensions has "gen_ai"\n| extend model = tostring(customDimensions["gen_ai.request.model"])\n| extend agent = tostring(customDimensions["gen_ai.agent.name"])\n| where isnotempty(model)\n| summarize p50 = percentile(duration, 50), p95 = percentile(duration, 95), p99 = percentile(duration, 99), calls = count() by model, agent\n| order by calls desc'
+        query: 'dependencies\n| where name startswith "chat "\n| extend model = tostring(customDimensions["gen_ai.request.model"])\n| extend inTokens = tolong(customDimensions["gen_ai.usage.input_tokens"])\n| extend outTokens = tolong(customDimensions["gen_ai.usage.output_tokens"])\n| where isnotempty(model)\n| summarize calls = count(), p50ms = percentile(duration, 50), p95ms = percentile(duration, 95), inTokens = sum(inTokens), outTokens = sum(outTokens) by model, name\n| order by calls desc'
         size: 0
-        title: 'Model + agent latency percentiles'
+        title: 'Per-scorer chat completion latency + token usage'
         timeContext: { durationMs: 86400000 }
         timeContextFromParameter: 'TimeRange'
         queryType: 0
         resourceType: 'microsoft.insights/components'
         visualization: 'table'
+      }
+    }
+    {
+      type: 3
+      content: {
+        version: 'KqlItem/1.0'
+        query: 'dependencies\n| where name startswith "chat "\n| extend inTokens = tolong(customDimensions["gen_ai.usage.input_tokens"])\n| extend outTokens = tolong(customDimensions["gen_ai.usage.output_tokens"])\n| extend model = tostring(customDimensions["gen_ai.request.model"])\n| summarize totalIn = sum(inTokens), totalOut = sum(outTokens) by model, bin(timestamp, 15m)\n| render columnchart'
+        size: 0
+        title: 'Token usage per model over time'
+        timeContext: { durationMs: 86400000 }
+        timeContextFromParameter: 'TimeRange'
+        queryType: 0
+        resourceType: 'microsoft.insights/components'
       }
     }
     {
