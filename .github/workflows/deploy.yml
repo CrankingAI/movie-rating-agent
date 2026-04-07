@@ -144,6 +144,7 @@ jobs:
           {
             echo "AZURE_RESOURCE_GROUP=${RESOURCE_GROUP}"
             echo "AZURE_FUNCTION_APP=${FUNCTION_APP}"
+            echo "AZURE_SWA_NAME=${SWA_NAME}"
           } >> "$GITHUB_ENV"
 
       - name: Read version
@@ -171,21 +172,29 @@ jobs:
           app-name: ${{ env.AZURE_FUNCTION_APP }}
           package: ./publish
 
-      - name: Verify /api/readyz reports the deployed version
+      - name: Verify /api/readyz via SWA linked backend
         shell: bash
         run: |
+          # Direct calls to <function>.azurewebsites.net return 401 because the
+          # SWA linked-backend feature locks the Function App to traffic that
+          # comes through the SWA proxy. So we must verify via the SWA host.
           EXPECTED="${{ steps.version.outputs.version }}"
+          SWA_HOST=$(az staticwebapp show \
+            --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+            --name "${{ env.AZURE_SWA_NAME }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --query defaultHostname -o tsv)
           for attempt in $(seq 1 12); do
-            READYZ=$(curl -sf "https://${AZURE_FUNCTION_APP}.azurewebsites.net/api/readyz" || true)
+            READYZ=$(curl -sf "https://${SWA_HOST}/api/readyz" || true)
             DEPLOYED=$(echo "$READYZ" | python3 -c "import sys,json; print(json.load(sys.stdin).get('version',''))" 2>/dev/null || true)
             if [ "$DEPLOYED" = "$EXPECTED" ]; then
-              echo "Verified Function App: v${DEPLOYED}"
+              echo "Verified Function App via SWA backend: v${DEPLOYED}"
               exit 0
             fi
-            echo "Waiting for Function App readyz (${attempt}/12)..."
+            echo "Waiting for Function App readyz via SWA (${attempt}/12)..."
             sleep 10
           done
-          echo "::error::Function App did not report expected version v${EXPECTED}"
+          echo "::error::Function App did not report expected version v${EXPECTED} via SWA route"
           exit 1
 
   # ── Static Web App ────────────────────────────────────────────────────
