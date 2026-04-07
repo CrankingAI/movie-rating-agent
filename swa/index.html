@@ -9,6 +9,12 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
     <script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');</script>
     <style>
+        /* Global Pico overrides for a softer, more spacious feel */
+        :root {
+            --pico-border-radius: 0.75rem;
+            --pico-spacing: 1.25rem;
+        }
+
         /* Cinema amber accent — dark */
         [data-theme="dark"] {
             --pico-text-selection-color: rgba(240, 160, 48, 0.1875);
@@ -33,9 +39,22 @@
             --pico-primary-inverse: #fff;
         }
 
-        /* Centered header */
+        /* Centered header with gradient title */
         body > header { text-align: center; }
         body > header nav { justify-content: center; }
+        body > header h1 {
+            background: linear-gradient(135deg, var(--pico-primary), var(--pico-primary-hover));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Full-height layout pushes footer down */
+        body { min-height: 100vh; display: flex; flex-direction: column; }
+        body > main { flex: 1; }
+
+        /* Accent-colored weight column in scoring table */
+        table td:last-child strong { color: var(--pico-primary); }
 
         /* Score badge */
         .score-badge {
@@ -109,6 +128,9 @@
             opacity: 0.7; transition: opacity 0.2s;
         }
         .theme-toggle:hover { opacity: 1; }
+
+        /* Subtle footer */
+        body > footer { text-align: center; opacity: 0.8; }
 
         /* Version display */
         #version { font-size: 0.7rem; opacity: 0.4; margin-top: 0.5rem; }
