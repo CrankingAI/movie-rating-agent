@@ -1,102 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Movie Rating Agent — www.movieratingagent.com</title>
     <link rel="canonical" href="https://www.movieratingagent.com/" />
     <meta name="description" content="AI-powered movie greatness scoring on a 0-100 scale using a multi-dimensional evaluation framework. Try it at www.movieratingagent.com." />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
     <style>
-        :root {
-            --bg: #0f0f14;
-            --surface: #1a1a24;
-            --surface2: #242434;
-            --accent: #6c63ff;
-            --accent-hover: #7c74ff;
-            --text: #e8e8f0;
-            --text-muted: #8888a0;
-            --success: #4caf50;
-            --warning: #ff9800;
-            --error: #f44336;
-            --gold: #ffd700;
-            --radius: 12px;
+        /* Cinema amber accent */
+        [data-theme="dark"] {
+            --pico-text-selection-color: rgba(240, 160, 48, 0.1875);
+            --pico-primary: #f0a030;
+            --pico-primary-background: #c88510;
+            --pico-primary-underline: rgba(240, 160, 48, 0.5);
+            --pico-primary-hover: #f5c060;
+            --pico-primary-hover-background: #d89520;
+            --pico-primary-focus: rgba(240, 160, 48, 0.375);
+            --pico-primary-inverse: #1a1a2e;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* Centered header */
+        body > header { text-align: center; }
+        body > header nav { justify-content: center; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        header { text-align: center; padding: 3rem 1rem 1rem; }
-        header h1 {
-            font-size: 2rem; font-weight: 700;
-            background: linear-gradient(135deg, var(--accent), var(--gold));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        header p { color: var(--text-muted); margin-top: 0.5rem; font-size: 0.95rem; }
-        .domain-link {
-            display: inline-block; margin-top: 0.35rem; font-size: 0.8rem;
-            color: var(--accent); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;
-        }
-        .domain-link:hover,
-        .domain-link:focus-visible { opacity: 1; text-decoration: underline; }
-        .domain-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-        /* ── Tabs ── */
-        .tabs {
-            display: flex; gap: 0; margin: 1rem 0 1.5rem;
-            border-bottom: 2px solid var(--surface2);
-        }
-        .tab-btn {
-            padding: 0.6rem 1.5rem; border: none; background: none;
-            color: var(--text-muted); font-size: 0.95rem; font-weight: 600;
-            cursor: pointer; border-bottom: 2px solid transparent;
-            margin-bottom: -2px; transition: all 0.2s;
-        }
-        .tab-btn:hover { color: var(--text); }
-        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-        .tab-panel { display: none; }
-        .tab-panel.active { display: block; }
-
-        .container { width: 100%; max-width: 700px; padding: 0 1rem; }
-
-        /* ── Rate tab ── */
-        .search-box { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
-        .search-box input {
-            flex: 1; padding: 0.875rem 1.25rem; border: 2px solid var(--surface2);
-            border-radius: var(--radius); background: var(--surface); color: var(--text);
-            font-size: 1rem; outline: none; transition: border-color 0.2s;
-        }
-        .search-box input:focus { border-color: var(--accent); }
-        .search-box input::placeholder { color: var(--text-muted); }
-        .search-box button {
-            padding: 0.875rem 1.5rem; border: none; border-radius: var(--radius);
-            background: var(--accent); color: white; font-size: 1rem; font-weight: 600;
-            cursor: pointer; transition: background 0.2s; white-space: nowrap;
-        }
-        .search-box button:hover:not(:disabled) { background: var(--accent-hover); }
-        .search-box button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .status { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.95rem; }
-        .spinner {
-            display: inline-block; width: 20px; height: 20px;
-            border: 2px solid var(--surface2); border-top-color: var(--accent);
-            border-radius: 50%; animation: spin 0.8s linear infinite;
-            margin-right: 0.5rem; vertical-align: middle;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .result-card { background: var(--surface); border-radius: var(--radius); padding: 2rem; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-        .result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-        .movie-title { font-size: 1.25rem; font-weight: 600; }
+        /* Score badge */
         .score-badge {
             font-size: 2rem; font-weight: 800; width: 72px; height: 72px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;
@@ -104,184 +32,190 @@
         .score-high { background: linear-gradient(135deg, #4caf50, #2e7d32); }
         .score-mid { background: linear-gradient(135deg, #ff9800, #e65100); }
         .score-low { background: linear-gradient(135deg, #f44336, #b71c1c); }
-        .sub-scores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
-        .sub-score { background: var(--surface2); border-radius: 8px; padding: 0.75rem; text-align: center; }
-        .sub-score-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* Result card layout */
+        .result-header { display: flex; align-items: center; justify-content: space-between; }
+        .movie-title { font-size: 1.25rem; font-weight: 600; }
+
+        /* Sub-scores grid */
+        .sub-scores {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .sub-score {
+            text-align: center; padding: 0.75rem;
+            border-radius: var(--pico-border-radius);
+            background: var(--pico-card-sectioning-background-color);
+        }
+        .sub-score-label {
+            font-size: 0.75rem; text-transform: uppercase;
+            letter-spacing: 0.05em; opacity: 0.7;
+        }
         .sub-score-value { font-size: 1.5rem; font-weight: 700; margin-top: 0.25rem; }
-        .reasoning { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem; padding: 1rem; background: var(--surface2); border-radius: 8px; }
+
+        /* Pros and cons */
         .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .pros-cons h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
-        .pros h3 { color: var(--success); } .cons h3 { color: var(--error); }
-        .pros-cons ul { list-style: none; font-size: 0.85rem; line-height: 1.6; color: var(--text-muted); }
-        .pros-cons li::before { margin-right: 0.4rem; }
-        .pros li::before { content: "+"; color: var(--success); font-weight: bold; }
-        .cons li::before { content: "-"; color: var(--error); font-weight: bold; }
-        .movie-info-link { font-size: 0.8rem; color: var(--accent); text-decoration: none; opacity: 0.8; transition: opacity 0.2s; }
-        .movie-info-link:hover { opacity: 1; text-decoration: underline; }
-        .error { background: rgba(244, 67, 54, 0.1); border: 1px solid var(--error); color: var(--error); padding: 1rem; border-radius: var(--radius); text-align: center; }
-
-        /* ── Learn tab ── */
-        .learn-section { margin-bottom: 2rem; }
-        .learn-section h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text); }
-        .learn-section p, .learn-section li { font-size: 0.9rem; line-height: 1.7; color: var(--text-muted); }
-        .learn-section ul { list-style: disc; padding-left: 1.25rem; margin-top: 0.5rem; }
-        .learn-section li { margin-bottom: 0.25rem; }
-
-        .workflow-diagram {
-            background: var(--surface); border-radius: var(--radius); padding: 1.5rem;
-            margin: 1rem 0; text-align: center; overflow-x: auto;
+        .pros-cons h3 {
+            font-size: 0.85rem; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 0.5rem;
         }
-        .workflow-diagram img, .workflow-diagram svg { max-width: 100%; height: auto; }
+        .pros h3 { color: #4caf50; }
+        .cons h3 { color: #f44336; }
+        .pros-cons ul { list-style: none; padding: 0; margin: 0; }
+        .pros-cons li { margin-bottom: 0.25rem; }
+        .pros li::before { content: "+ "; color: #4caf50; font-weight: bold; }
+        .cons li::before { content: "− "; color: #f44336; font-weight: bold; }
 
-        .weight-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.9rem; }
-        .weight-table th, .weight-table td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--surface2); }
-        .weight-table th { color: var(--text); font-weight: 600; }
-        .weight-table td { color: var(--text-muted); }
-        .weight-table .weight { color: var(--accent); font-weight: 600; }
+        /* Spinner */
+        .spinner {
+            display: inline-block; width: 20px; height: 20px;
+            border: 2px solid var(--pico-muted-border-color);
+            border-top-color: var(--pico-primary);
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+            margin-right: 0.5rem; vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-        .tech-badge {
-            display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px;
-            background: var(--surface2); color: var(--text-muted); font-size: 0.75rem;
-            margin: 0.15rem; font-family: monospace;
-        }
+        /* Status and error text */
+        .status { text-align: center; padding: 2rem 0; }
+        .error { color: #f44336; text-align: center; padding: 1rem 0; }
 
-        .probe-buttons { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
-        .probe-btn {
-            padding: 0.5rem 1rem; border: 1px solid var(--surface2); border-radius: 6px;
-            background: var(--surface); color: var(--text-muted); font-size: 0.8rem;
-            font-family: monospace; cursor: pointer; transition: all 0.2s;
-        }
-        .probe-btn:hover { border-color: var(--accent); color: var(--text); }
-        .probe-result {
-            background: var(--surface); border-radius: 8px; padding: 0.75rem 1rem;
-            font-size: 0.8rem; font-family: monospace; color: var(--text-muted);
-            white-space: pre-wrap; word-break: break-all; margin-bottom: 0.5rem;
-            display: none; border-left: 3px solid var(--accent);
-        }
+        /* Probe results toggle */
+        .probe-result { display: none; }
         .probe-result.visible { display: block; animation: fadeIn 0.2s ease; }
 
-        /* ── Footer ── */
-        footer { margin-top: auto; padding: 2rem; text-align: center; color: var(--text-muted); font-size: 0.8rem; }
-        .version { font-size: 0.7rem; color: var(--surface2); margin-top: 0.5rem; }
+        /* Diagram images */
+        .workflow-diagram { text-align: center; overflow-x: auto; margin: 1rem 0; }
+        .workflow-diagram img { max-width: 100%; height: auto; }
+
+        /* Version display */
+        #version { font-size: 0.7rem; opacity: 0.4; margin-top: 0.5rem; }
     </style>
 </head>
 <body>
     <header>
-        <h1>Movie Rating Agent</h1>
+        <h1>🎬 Movie Rating Agent</h1>
         <p>AI-powered movie greatness scoring (0-100)</p>
-        <a href="https://www.movieratingagent.com/" class="domain-link">www.movieratingagent.com</a>
+        <p><small><a href="https://www.movieratingagent.com/">www.movieratingagent.com</a></small></p>
+        <nav>
+            <ul>
+                <li><a href="#" data-tab="rate" aria-current="page" onclick="switchTab('rate'); return false;">Rate</a></li>
+                <li><a href="#" data-tab="learn" onclick="switchTab('learn'); return false;">Learn</a></li>
+            </ul>
+        </nav>
     </header>
 
-    <div class="container">
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('rate')">Rate</button>
-            <button class="tab-btn" onclick="switchTab('learn')">Learn</button>
-        </div>
-
+    <main>
         <!-- Rate Tab -->
-        <div id="tab-rate" class="tab-panel active">
-            <div class="search-box">
+        <section id="tab-rate">
+            <fieldset role="group">
                 <input type="text" id="movieInput" placeholder="Enter a movie title..." autofocus />
                 <button id="rateBtn" onclick="rateMovie()">Rate It</button>
-            </div>
+            </fieldset>
             <div id="output"></div>
-        </div>
+        </section>
 
         <!-- Learn Tab -->
-        <div id="tab-learn" class="tab-panel">
-            <div class="learn-section">
+        <section id="tab-learn" hidden>
+            <section>
                 <h2>How It Works</h2>
                 <p>The Movie Rating Agent evaluates films using a fan-out/fan-in workflow powered by the
                    <strong>Microsoft.Extensions.AI Agent Framework</strong>. When you submit a movie title,
                    the agent resolves it to a canonical title with release year, then runs three independent
                    LLM-powered scorers in parallel:</p>
-            </div>
+            </section>
 
-            <div class="learn-section">
+            <section>
                 <h2>Agent Workflow</h2>
                 <div class="workflow-diagram">
                     <img src="agent-workflow.svg" alt="Agent workflow: Start fans out to 3 scorers, results merge through ProsConsRollup into WeightedScoreRollup" />
                 </div>
-            </div>
+            </section>
 
-            <div class="learn-section">
+            <section>
                 <h2>Job Lifecycle</h2>
                 <p>Jobs use an async <strong>HTTP 202 Accepted</strong> pattern. The client submits a movie,
                    receives a job ID immediately, and polls until the agent finishes. The agent runs on a
-                   queue trigger &mdash; decoupled from the HTTP request &mdash; with all state persisted in Blob Storage.</p>
+                   queue trigger — decoupled from the HTTP request — with all state persisted in Blob Storage.</p>
                 <div class="workflow-diagram">
                     <img src="job-lifecycle.svg" alt="Sequence diagram: POST /api/jobs returns 202, queue triggers the agent, client polls GET /api/jobs/{jobId} until Completed" />
                 </div>
-            </div>
+            </section>
 
-            <div class="learn-section">
+            <section>
                 <h2>Scoring Dimensions</h2>
-                <table class="weight-table">
-                    <tr><th>Scorer</th><th>What it evaluates</th><th>Weight</th></tr>
-                    <tr>
-                        <td>PopularityScorer</td>
-                        <td>Box office, audience reach, streaming popularity, mainstream recognition</td>
-                        <td class="weight">30%</td>
-                    </tr>
-                    <tr>
-                        <td>ArtisticValueScorer</td>
-                        <td>Cinematography, direction, acting, screenplay, awards</td>
-                        <td class="weight">40%</td>
-                    </tr>
-                    <tr>
-                        <td>IconicnessScorer</td>
-                        <td>Memorable quotes, iconic scenes, cultural impact, influence on cinema</td>
-                        <td class="weight">30%</td>
-                    </tr>
+                <table>
+                    <thead>
+                        <tr><th>Scorer</th><th>What it evaluates</th><th>Weight</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>PopularityScorer</td>
+                            <td>Box office, audience reach, streaming popularity, mainstream recognition</td>
+                            <td><strong>30%</strong></td>
+                        </tr>
+                        <tr>
+                            <td>ArtisticValueScorer</td>
+                            <td>Cinematography, direction, acting, screenplay, awards</td>
+                            <td><strong>40%</strong></td>
+                        </tr>
+                        <tr>
+                            <td>IconicnessScorer</td>
+                            <td>Memorable quotes, iconic scenes, cultural impact, influence on cinema</td>
+                            <td><strong>30%</strong></td>
+                        </tr>
+                    </tbody>
                 </table>
-            </div>
+            </section>
 
-            <div class="learn-section">
+            <section>
                 <h2>The Pipeline</h2>
                 <ul>
-                    <li><strong>Title Resolution</strong> &mdash; Normalizes your input to a canonical movie title and looks up the release year</li>
-                    <li><strong>Fan-out</strong> &mdash; Three scorers run in parallel, each returning a 0-100 score plus pros and cons</li>
-                    <li><strong>Fan-in Barrier</strong> &mdash; Waits for all three scorers to complete</li>
-                    <li><strong>ProsConsRollup</strong> &mdash; LLM merges, deduplicates, and identifies conflicts across scorer outputs</li>
-                    <li><strong>WeightedScoreRollup</strong> &mdash; Pure computation: 30/40/30 weighted average produces the final score</li>
+                    <li><strong>Title Resolution</strong> — Normalizes input to a canonical movie title with release year</li>
+                    <li><strong>Fan-out</strong> — Three scorers run in parallel, each returning a 0-100 score plus pros and cons</li>
+                    <li><strong>Fan-in Barrier</strong> — Waits for all three scorers to complete</li>
+                    <li><strong>ProsConsRollup</strong> — LLM merges, deduplicates, and identifies conflicts across scorer outputs</li>
+                    <li><strong>WeightedScoreRollup</strong> — Pure computation: 30/40/30 weighted average produces the final score</li>
                 </ul>
-            </div>
+            </section>
 
-            <div class="learn-section">
+            <section>
                 <h2>Tech Stack</h2>
                 <p>
-                    <span class="tech-badge">.NET 10</span>
-                    <span class="tech-badge">Agent Framework</span>
-                    <span class="tech-badge">Microsoft Foundry</span>
-                    <span class="tech-badge">gpt-5.4</span>
-                    <span class="tech-badge">Azure Functions</span>
-                    <span class="tech-badge">Azure Static Web Apps</span>
-                    <span class="tech-badge">Azure Storage</span>
-                    <span class="tech-badge">OpenTelemetry</span>
-                    <span class="tech-badge">.NET Aspire</span>
-                    <span class="tech-badge">Bicep IaC</span>
+                    <kbd>.NET 10</kbd>
+                    <kbd>Agent Framework</kbd>
+                    <kbd>Microsoft Foundry</kbd>
+                    <kbd>gpt-5.4</kbd>
+                    <kbd>Azure Functions</kbd>
+                    <kbd>Azure Static Web Apps</kbd>
+                    <kbd>Azure Storage</kbd>
+                    <kbd>OpenTelemetry</kbd>
+                    <kbd>.NET Aspire</kbd>
+                    <kbd>Bicep IaC</kbd>
                 </p>
-            </div>
+            </section>
 
-            <div class="learn-section">
-                <h2>Health Probes</h2>
-                <div class="probe-buttons">
-                    <button class="probe-btn" onclick="callProbe('readyz', 'readyz-result')">GET /api/readyz</button>
-                    <button class="probe-btn" onclick="callProbe('livez', 'livez-result')">GET /api/livez</button>
+            <details>
+                <summary>Health Probes</summary>
+                <div role="group">
+                    <button onclick="callProbe('readyz', 'readyz-result')">GET /api/readyz</button>
+                    <button onclick="callProbe('livez', 'livez-result')">GET /api/livez</button>
                 </div>
                 <pre class="probe-result" id="readyz-result"></pre>
                 <pre class="probe-result" id="livez-result"></pre>
-            </div>
-        </div>
-    </div>
+            </details>
+        </section>
+    </main>
 
     <footer>
-        <a href="https://www.movieratingagent.com/" style="color: var(--accent); text-decoration: none; font-weight: 600;">www.movieratingagent.com</a>
-        <br/>
-        Powered by Agent Framework &bull; Microsoft Foundry &bull; Microsoft Azure
-        <br/>
-        <a href="https://github.com/CrankingAI/movie-rating-agent" style="color: var(--accent); text-decoration: none;">github.com/CrankingAI/movie-rating-agent</a>
-        <div class="version" id="version"></div>
+        <p><a href="https://www.movieratingagent.com/"><strong>www.movieratingagent.com</strong></a></p>
+        <p><small>
+            Powered by Agent Framework · Microsoft Foundry · Microsoft Azure
+            <br/>
+            <a href="https://github.com/CrankingAI/movie-rating-agent">github.com/CrankingAI/movie-rating-agent</a>
+        </small></p>
+        <p id="version"></p>
     </footer>
 
     <script>
@@ -291,20 +225,19 @@
 
         const input = document.getElementById('movieInput');
         const btn = document.getElementById('rateBtn');
+        const output = document.getElementById('output');
 
         fetch(`${API_BASE}/readyz`).then(r => r.json()).then(d => {
             const hash = d.commit && d.commit !== 'unknown' ? ` (${d.commit.substring(0, 7)})` : '';
             document.getElementById('version').textContent = `v${d.version}${hash}`;
         }).catch(() => {});
-        const output = document.getElementById('output');
 
         input.addEventListener('keydown', e => { if (e.key === 'Enter') rateMovie(); });
 
         function switchTab(name) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-            document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
-            document.getElementById(`tab-${name}`).classList.add('active');
+            document.querySelectorAll('nav [data-tab]').forEach(a => a.removeAttribute('aria-current'));
+            document.querySelector(`nav [data-tab="${name}"]`).setAttribute('aria-current', 'page');
+            document.querySelectorAll('main > section').forEach(s => s.hidden = s.id !== `tab-${name}`);
             if (name === 'rate') input.focus();
         }
 
@@ -325,7 +258,7 @@
             const movie = input.value.trim();
             if (!movie) return;
             btn.disabled = true;
-            output.innerHTML = `<div class="status"><span class="spinner"></span>Submitting "${movie}"...</div>`;
+            output.innerHTML = `<p class="status"><span class="spinner"></span>Submitting "${movie}"...</p>`;
             try {
                 const submitRes = await fetch(`${API_BASE}/jobs`, {
                     method: 'POST',
@@ -334,7 +267,7 @@
                 });
                 if (!submitRes.ok) throw new Error(`Submit failed: ${submitRes.status}`);
                 const { jobId } = await submitRes.json();
-                output.innerHTML = `<div class="status"><span class="spinner"></span>Processing job ${jobId.substring(0, 8)}...</div>`;
+                output.innerHTML = `<p class="status"><span class="spinner"></span>Processing job ${jobId.substring(0, 8)}...</p>`;
                 while (true) {
                     await new Promise(r => setTimeout(r, 2000));
                     const pollRes = await fetch(`${API_BASE}/jobs/${jobId}`);
@@ -343,15 +276,15 @@
                     const status = data.meta?.Status ?? data.meta?.status;
                     if (status === 2 || status === 'Completed') { renderResult(data.result); break; }
                     else if (status === 3 || status === 'Failed') { throw new Error(data.meta?.Error || data.meta?.error || 'Job failed'); }
-                    output.innerHTML = `<div class="status"><span class="spinner"></span>Still processing...</div>`;
+                    output.innerHTML = `<p class="status"><span class="spinner"></span>Still processing...</p>`;
                 }
             } catch (err) {
-                output.innerHTML = `<div class="error">${err.message}</div>`;
+                output.innerHTML = `<p class="error">${err.message}</p>`;
             } finally { btn.disabled = false; }
         }
 
         function renderResult(r) {
-            if (!r) { output.innerHTML = '<div class="error">No result returned</div>'; return; }
+            if (!r) { output.innerHTML = '<p class="error">No result returned</p>'; return; }
             const score = r.Score ?? r.score;
             const scoreClass = score >= 70 ? 'score-high' : score >= 40 ? 'score-mid' : 'score-low';
             const ratedMovie = r.RatedMovie ?? r.ratedMovie ?? '';
@@ -363,8 +296,8 @@
             const pros = r.Pros ?? r.pros ?? [];
             const cons = r.Cons ?? r.cons ?? [];
             const infoLinkHtml = infoUrl
-                ? `<a href="${infoUrl}" target="_blank" rel="noopener" class="movie-info-link">More about this film &#8599;</a>` : '';
-            let html = `<div class="result-card"><div class="result-header">
+                ? `<small><a href="${infoUrl}" target="_blank" rel="noopener">More about this film ↗</a></small>` : '';
+            let html = `<article style="animation: fadeIn 0.3s ease"><div class="result-header">
                 <div><div class="movie-title">${displayTitle}</div>${infoLinkHtml}</div>
                 <div class="score-badge ${scoreClass}">${score}</div></div>`;
             if (subs) {
@@ -373,13 +306,13 @@
                     <div class="sub-score"><div class="sub-score-label">Artistic Value</div><div class="sub-score-value">${subs.ArtisticValue ?? subs.artisticValue}</div></div>
                     <div class="sub-score"><div class="sub-score-label">Iconicness</div><div class="sub-score-value">${subs.Iconicness ?? subs.iconicness}</div></div></div>`;
             }
-            html += `<div class="reasoning">${reasoning}</div>`;
+            html += `<blockquote>${reasoning}</blockquote>`;
             if (pros.length || cons.length) {
                 html += `<div class="pros-cons">
                     <div class="pros"><h3>Pros</h3><ul>${pros.map(p => `<li>${p}</li>`).join('')}</ul></div>
                     <div class="cons"><h3>Cons</h3><ul>${cons.map(c => `<li>${c}</li>`).join('')}</ul></div></div>`;
             }
-            html += '</div>';
+            html += '</article>';
             output.innerHTML = html;
         }
     </script>
