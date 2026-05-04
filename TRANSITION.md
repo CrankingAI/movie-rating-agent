@@ -1,8 +1,8 @@
-# TRANSITION.md — moving Movie Rating Agent into BillDevPlayground
+# TRANSITION.md — moving Movie Rating Agent into BillDev
 
 This runbook captures the **one-time migration** of the Movie Rating Agent
 from its existing home in the **OpenEval** subscription to a fresh, standalone
-deployment in the **BillDevPlayground** subscription, plus the configuration of
+deployment in the **BillDev** subscription, plus the configuration of
 **movieratingagent.com** on Cloudflare DNS, plus the cleanup of the old
 deployment.
 
@@ -17,7 +17,7 @@ Cloudflare is spelled out so the run can be paused and resumed safely.
 | --- | --- |
 | **Old subscription** | `OpenEval` — `cc73752c-0fe7-4a20-bad5-27505cada36c` |
 | **Old resource group** | `rg-movie-rating-agent-dev` |
-| **New subscription** | `BillDevPlayground` — `379168a0-b9fc-4fa0-a3cd-ce32ab20ee70` |
+| **New subscription** | `BillDev` — `379168a0-b9fc-4fa0-a3cd-ce32ab20ee70` |
 | **Tenant** (both subs) | `5c369887-a4a0-4a67-a8d6-a78e017216fc` |
 | **New resource group** | `rg-movie-rating-agent-dev` (same name, different sub) |
 | **Region** | `eastus2` |
@@ -25,7 +25,7 @@ Cloudflare is spelled out so the run can be paused and resumed safely.
 | **Domain layout** | apex + www → SWA; API stays on the SWA `/api` linked-backend route |
 | **GitHub repo** | `CrankingAI/movie-rating-agent` |
 
-> Note: BillDevPlayground was recently renamed (from `OpenSesame`). The
+> Note: BillDev was recently renamed (from `OpenSesame`). The
 > rename has propagated, but the subscription **ID** remains the source of
 > truth in scripts and CI for safety against any future renames.
 
@@ -36,7 +36,7 @@ Cloudflare is spelled out so the run can be paused and resumed safely.
 Run through this list before touching anything:
 
 - [ ] You have **Owner** (or at least Contributor + User Access Administrator)
-      on the BillDevPlayground subscription.
+      on the BillDev subscription.
 - [ ] You have **Owner** of the Cloudflare zone for `movieratingagent.com`.
 - [ ] You have the GitHub `gh` CLI installed and authenticated as a maintainer
       of `CrankingAI/movie-rating-agent`.
@@ -61,12 +61,12 @@ Run through this list before touching anything:
 ```bash
 az login                                    # if not already
 az account set --subscription 379168a0-b9fc-4fa0-a3cd-ce32ab20ee70
-az account show --query name -o tsv         # should print: BillDevPlayground
+az account show --query name -o tsv         # should print: BillDev
 ```
 
 ### 2b. Warm up the new subscription
 
-`BillDevPlayground` is a fresh subscription, so the providers need to be
+`BillDev` is a fresh subscription, so the providers need to be
 registered and the model availability checked before the first Bicep deploy.
 The warmup script handles all of that idempotently:
 
@@ -135,7 +135,7 @@ Tail the run with:
 gh run watch $(gh run list --workflow=deploy.yml --limit 1 --json databaseId -q '.[0].databaseId')
 ```
 
-Expected result: a new `rg-movie-rating-agent-dev` in BillDevPlayground
+Expected result: a new `rg-movie-rating-agent-dev` in BillDev
 containing:
 
 * `log-movie-rating-agent-dev` (Log Analytics)
@@ -151,7 +151,7 @@ containing:
 
 `<token>` is a 6-character deterministic suffix derived from the
 subscription ID (`take(replace(subscription().subscriptionId, '-', ''), 6)`).
-For BillDevPlayground (`379168a0-...`) it resolves to `379168`. The token
+For BillDev (`379168a0-...`) it resolves to `379168`. The token
 makes globally-unique names (storage account, AI Services subdomain,
 Function App hostname) collision-free across subscriptions.
 
@@ -467,7 +467,7 @@ For reviewers, the diffs that go with this runbook:
 * `infra/foundry.bicep`, `infra/storage.bicep`, `infra/monitoring.bicep` —
   accept `tags` parameter.
 * `scripts/deploy-config.sh` — sets `AZURE_SUBSCRIPTION_ID` /
-  `AZURE_TENANT_ID` to BillDevPlayground; introduces
+  `AZURE_TENANT_ID` to BillDev; introduces
   `BICEP_PARAMS_WITH_DOMAIN` and `CUSTOM_DOMAIN`.
 * `scripts/deploy.sh` — adds `--with-domain`, sub guardrail, uses the
   bicepparam files instead of CLI `--parameters`.

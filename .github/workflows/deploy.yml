@@ -8,7 +8,7 @@ name: Deploy
 # touch infra/** trigger the Bicep job. Each job is also independently
 # runnable from the workflow_dispatch UI via the `target` input.
 #
-# All jobs use OIDC against the BillDevPlayground subscription. The
+# All jobs use OIDC against the BillDev subscription. The
 # AZURE_SUBSCRIPTION_ID secret is set by scripts/setup-oidc.sh.
 # ─────────────────────────────────────────────────────────────────────────
 

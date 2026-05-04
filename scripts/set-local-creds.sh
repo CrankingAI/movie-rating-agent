@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
 # set-local-creds.sh — Fetch Foundry + App Insights credentials from the
-# deployed BillDevPlayground stack and pipe them into the Aspire AppHost's
+# deployed BillDev stack and pipe them into the Aspire AppHost's
 # user-secrets store so local runs can hit the real LLMs.
 #
 # Every az call pins --subscription explicitly; never relies on the

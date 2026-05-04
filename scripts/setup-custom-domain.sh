@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
 # setup-custom-domain.sh — Walk a user through binding movieratingagent.com
-# (apex + www) to the Static Web App that lives in BillDevPlayground.
+# (apex + www) to the Static Web App that lives in BillDev.
 #
 # This script implements the four-step custom-domain dance described in
 # TRANSITION.md:

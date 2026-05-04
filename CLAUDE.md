@@ -214,7 +214,7 @@ npx @azure/static-web-apps-cli deploy ./swa --deployment-token "$DEPLOY_TOKEN" -
 ## Azure Resources (dev environment)
 
 All resources in `rg-movie-rating-agent-dev` (eastus2) in subscription
-`BillDevPlayground` (`379168a0-b9fc-4fa0-a3cd-ce32ab20ee70`):
+`BillDev` (`379168a0-b9fc-4fa0-a3cd-ce32ab20ee70`):
 
 - **AI Services**: `ai-movie-rating-agent-dev-<token>` — 2 GA deployments
   (gpt-4o, gpt-4o-mini); gpt-5.4 is opt-in via Bicep `deployGpt54=true`
@@ -226,7 +226,7 @@ All resources in `rg-movie-rating-agent-dev` (eastus2) in subscription
 
 `<token>` is a 6-char deterministic suffix derived from the subscription ID
 (`take(replace(subscription().subscriptionId, '-', ''), 6)`); for
-BillDevPlayground it resolves to `379168`. Bash equivalent:
+BillDev it resolves to `379168`. Bash equivalent:
 `echo "$AZURE_SUBSCRIPTION_ID" | tr -d - | cut -c1-6`. Re-deploys are
 idempotent because the same sub always produces the same token, and two
 different subs can deploy the same Bicep without collision.
@@ -246,7 +246,7 @@ gh workflow run deploy.yml -f target=infra -f with_domain=true
 ```
 
 `scripts/deploy.sh` is preserved as a break-glass / local-only fallback.
-See `TRANSITION.md` for the full BillDevPlayground bring-up + DNS cutover
+See `TRANSITION.md` for the full BillDev bring-up + DNS cutover
 runbook.
 
 ## Scripts

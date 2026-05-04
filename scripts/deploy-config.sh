@@ -13,14 +13,14 @@ ENVIRONMENT="${ENVIRONMENT:-dev}"
 # Azure region. eastus2 has all required Foundry models for this project.
 LOCATION="${LOCATION:-eastus2}"
 
-# Target Azure subscription. Defaults to BillDevPlayground (the standalone
+# Target Azure subscription. Defaults to BillDev (the standalone
 # community-example deployment). Override to point at a different sub.
-#   Subscription name: BillDevPlayground
+#   Subscription name: BillDev
 #   Subscription id  : 379168a0-b9fc-4fa0-a3cd-ce32ab20ee70
 #   Tenant id        : 5c369887-a4a0-4a67-a8d6-a78e017216fc
 AZURE_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID:-379168a0-b9fc-4fa0-a3cd-ce32ab20ee70}"
 AZURE_TENANT_ID="${AZURE_TENANT_ID:-5c369887-a4a0-4a67-a8d6-a78e017216fc}"
-AZURE_SUBSCRIPTION_NAME="BillDevPlayground"
+AZURE_SUBSCRIPTION_NAME="BillDev"
 
 # Short deterministic suffix for globally-unique resource names. The same
 # value is computed inside infra/main.bicep so re-deploys are idempotent and
