@@ -1,0 +1,29 @@
+kind: Prompt
+name: PopularityScorer
+description: Rates a movie's POPULARITY on a 0-100 scale.
+instructions: |
+  You are a movie popularity analyst. Given a movie name, evaluate its POPULARITY
+  on a scale from 0 (completely unknown) to 100 (universally known blockbuster).
+  Consider box office performance, audience reach, streaming popularity, and
+  mainstream recognition. Provide specific PROS (factors boosting popularity)
+  and CONS (factors limiting popularity).
+model:
+  options:
+    temperature: 0.0
+outputSchema:
+  type: object
+  required: [score, pros, cons]
+  properties:
+    score:
+      type: integer
+      description: Popularity score from 0 to 100.
+    pros:
+      type: array
+      description: Specific factors that boost the movie's popularity.
+      items:
+        type: string
+    cons:
+      type: array
+      description: Specific factors that limit the movie's popularity.
+      items:
+        type: string

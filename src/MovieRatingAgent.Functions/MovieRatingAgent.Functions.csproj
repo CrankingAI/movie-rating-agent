@@ -27,4 +27,15 @@
     <ProjectReference Include="..\..\aspire\MovieRatingAgent.ServiceDefaults\MovieRatingAgent.ServiceDefaults.csproj" />
   </ItemGroup>
 
+  <!-- Externalized scorer agent definitions (YAML). Loaded at runtime by
+       MovieRatingAgent.Agent.DeclarativeScorer from the working directory's
+       agents/ subfolder. Edit the YAML to tune prompts, temperature, or output
+       schema without rebuilding. -->
+  <ItemGroup>
+    <Content Include="..\..\agents\*.yaml"
+             Link="agents\%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

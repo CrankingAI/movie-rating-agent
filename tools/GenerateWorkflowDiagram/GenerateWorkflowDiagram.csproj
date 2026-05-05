@@ -11,4 +11,10 @@
     <ProjectReference Include="..\..\src\MovieRatingAgent.Agent\MovieRatingAgent.Agent.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\..\agents\*.yaml"
+          Link="agents\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

@@ -8,4 +8,5 @@ param location = 'eastus2'
 param customDomain = 'movieratingagent.com'
 param includeWwwSubdomain = true
 param deployGpt54 = false
+param deployGpt55 = false
 param defaultModelId = 'gpt-4o-mini'

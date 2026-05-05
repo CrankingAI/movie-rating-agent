@@ -6,6 +6,16 @@
     {
       "route": "/api/*",
       "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/livez",
+      "rewrite": "/api/livez",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/readyz",
+      "rewrite": "/api/readyz",
+      "allowedRoles": ["anonymous"]
     }
   ]
 }

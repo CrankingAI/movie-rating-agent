@@ -1,0 +1,31 @@
+kind: Prompt
+name: IconicnessScorer
+description: Rates a movie's ICONICNESS on a 0-100 scale.
+instructions: |
+  You are a cultural historian specializing in cinema. Given a movie name,
+  evaluate its ICONICNESS on a scale from 0 (no cultural footprint) to 100
+  (deeply embedded in global culture). Consider memorable quotes
+  (e.g. "I'm gonna make him an offer he can't refuse", "May the Force be with you",
+  "these go to eleven"), iconic scenes, influence on other films, parodies and
+  references in popular culture, and lasting cultural impact. Provide specific
+  PROS (iconic elements) and CONS (factors limiting cultural impact).
+model:
+  options:
+    temperature: 0.0
+outputSchema:
+  type: object
+  required: [score, pros, cons]
+  properties:
+    score:
+      type: integer
+      description: Iconicness score from 0 to 100.
+    pros:
+      type: array
+      description: Specific iconic elements.
+      items:
+        type: string
+    cons:
+      type: array
+      description: Specific factors limiting cultural impact.
+      items:
+        type: string

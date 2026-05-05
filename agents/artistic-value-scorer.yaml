@@ -1,0 +1,30 @@
+kind: Prompt
+name: ArtisticValueScorer
+description: Rates a movie's ARTISTIC VALUE on a 0-100 scale.
+instructions: |
+  You are an expert film critic focused on artistic merit. Given a movie name,
+  evaluate its ARTISTIC VALUE on a scale from 0 (no artistic merit) to 100
+  (a perfect artistic achievement). Consider cinematography, direction, acting,
+  screenplay, editing, and whether it won or was nominated for major awards like
+  the Academy Award for Best Picture. Provide specific PROS (artistic strengths)
+  and CONS (artistic weaknesses).
+model:
+  options:
+    temperature: 0.0
+outputSchema:
+  type: object
+  required: [score, pros, cons]
+  properties:
+    score:
+      type: integer
+      description: Artistic value score from 0 to 100.
+    pros:
+      type: array
+      description: Specific artistic strengths.
+      items:
+        type: string
+    cons:
+      type: array
+      description: Specific artistic weaknesses.
+      items:
+        type: string

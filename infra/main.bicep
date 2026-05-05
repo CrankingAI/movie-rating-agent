@@ -38,8 +38,11 @@ param includeWwwSubdomain bool = true
 @description('When true, deploy the gpt-5.4 preview model alongside the GA models. Requires preview-model quota in the target subscription.')
 param deployGpt54 bool = false
 
+@description('When true, deploy the gpt-5.5 model alongside the GA models. Tier 5 / Tier 6 subs have quota by default; lower tiers must request it first.')
+param deployGpt55 bool = false
+
 @description('Which Azure AI deployment to expose to the Function App as the default Foundry__ModelId.')
-@allowed(['gpt-5.4', 'gpt-4o', 'gpt-4o-mini'])
+@allowed(['gpt-5.5', 'gpt-5.4', 'gpt-4o', 'gpt-4o-mini'])
 param defaultModelId string = 'gpt-4o-mini'
 
 @description('Tags applied to the resource group (and inherited by children that opt in).')
@@ -95,6 +98,7 @@ module foundry 'foundry.bicep' = {
     tags: tags
     resourceToken: resourceToken
     deployGpt54: deployGpt54
+    deployGpt55: deployGpt55
     defaultModelId: defaultModelId
   }
 }

@@ -13,8 +13,11 @@ param resourceToken string
 @description('When true, deploy the gpt-5.4 model. Requires the subscription to have quota for that preview model — most subs do not. Leave false to deploy only the GA models (gpt-4o, gpt-4o-mini).')
 param deployGpt54 bool = false
 
+@description('When true, deploy the gpt-5.5 model. Quota is granted by default only on Tier 5 / Tier 6 subscriptions; lower tiers must request quota first. Region availability is limited (eastus2 / swedencentral / southcentralus / polandcentral as of 2026-04).')
+param deployGpt55 bool = false
+
 @description('Which deployment to expose as the default model id (passed to the Function App). Must be one of the deployments below.')
-@allowed(['gpt-5.4', 'gpt-4o', 'gpt-4o-mini'])
+@allowed(['gpt-5.5', 'gpt-5.4', 'gpt-4o', 'gpt-4o-mini'])
 param defaultModelId string = 'gpt-4o-mini'
 
 var aiServicesName = 'ai-movie-rating-agent-${environmentName}-${resourceToken}'
@@ -83,6 +86,28 @@ resource gpt54Deployment 'Microsoft.CognitiveServices/accounts/deployments@2024-
       format: 'OpenAI'
       name: 'gpt-5.4'
       version: '2026-03-05'
+    }
+  }
+}
+
+// gpt-5.5 has limited region availability (eastus2 / swedencentral /
+// southcentralus / polandcentral). Tier 5 / Tier 6 subs have quota by default;
+// lower tiers must submit a quota request before this deployment will succeed.
+// dependsOn both prior deployments so the CogServices backend serializes
+// capacity reservations regardless of which preview models are also opted in.
+resource gpt55Deployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = if (deployGpt55) {
+  parent: aiServices
+  name: 'gpt-5.5'
+  dependsOn: [gpt4oMiniDeployment, gpt54Deployment]
+  sku: {
+    name: 'GlobalStandard'
+    capacity: 10
+  }
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: 'gpt-5.5'
+      version: '2026-04-24'
     }
   }
 }

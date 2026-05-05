@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
+using MovieRatingAgent.Agent.Declarative;
 using MovieRatingAgent.Agent.Executors;
 using MovieRatingAgent.Agent.Models;
 using MovieRatingAgent.Core;
@@ -184,9 +185,13 @@ public class MovieGreatnessAgent
         var start = ExecutorBindingExtensions.BindAsExecutor(
             forwardRequestedMovie!, "Start");
 
-        var popularityScorer = CreateScorerBinding(ScorerExecutors.PopularityId, chatClient, modelId);
-        var artisticScorer = CreateScorerBinding(ScorerExecutors.ArtisticValueId, chatClient, modelId);
-        var iconicnessScorer = CreateScorerBinding(ScorerExecutors.IconicnessId, chatClient, modelId);
+        var agentsDir = ResolveAgentsDirectory();
+        var popularityScorer = CreateAgentBinding(
+            DeclarativeScorer.FromYamlFile(Path.Combine(agentsDir, "popularity-scorer.yaml"), chatClient), modelId);
+        var artisticScorer = CreateAgentBinding(
+            DeclarativeScorer.FromYamlFile(Path.Combine(agentsDir, "artistic-value-scorer.yaml"), chatClient), modelId);
+        var iconicnessScorer = CreateAgentBinding(
+            DeclarativeScorer.FromYamlFile(Path.Combine(agentsDir, "iconicness-scorer.yaml"), chatClient), modelId);
 
         var collectedResults = new List<ScorerResult>();
         var resultCollector = ExecutorBindingExtensions.BindAsExecutor<ScorerResult, ScorerResultSet>(
@@ -253,23 +258,46 @@ public class MovieGreatnessAgent
             .Build();
     }
 
-    private static ExecutorBinding CreateScorerBinding(string category, IChatClient chatClient, string modelId)
+    private static ExecutorBinding CreateAgentBinding(DeclarativeScorer scorer, string modelId)
     {
-        var scorer = ScorerExecutors.CreateScorer(category);
-
         return ExecutorBindingExtensions.BindAsExecutor<string, ScorerResult>(
             async (string movieName, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                using var activity = ActivitySourceInstance.StartActivity($"chat {category}");
+                using var activity = ActivitySourceInstance.StartActivity($"chat {scorer.Id}");
                 activity?.SetTag("gen_ai.operation.name", "chat");
-                activity?.SetTag("gen_ai.agent.name", category);
+                activity?.SetTag("gen_ai.agent.name", scorer.Id);
                 activity?.SetTag("gen_ai.request.model", modelId);
                 activity?.SetTag("gen_ai.provider.name", "azure.ai.inference");
                 activity?.SetTag("azure.resource_provider.namespace", "Microsoft.CognitiveServices");
 
-                return await scorer(movieName, chatClient, ct);
+                return await scorer.RunAsync(movieName, ct);
             },
-            category);
+            scorer.Id);
+    }
+
+    /// <summary>
+    /// Locates the agents/ directory. Conventionally it's <c>{AppContext.BaseDirectory}/agents</c>
+    /// (Content-copied from the repo root by each consuming project), but for callers that
+    /// run from non-standard working directories we walk up looking for a sibling <c>agents/</c>
+    /// folder containing the expected scorer YAMLs.
+    /// </summary>
+    private static string ResolveAgentsDirectory()
+    {
+        var primary = Path.Combine(AppContext.BaseDirectory, "agents");
+        if (File.Exists(Path.Combine(primary, "popularity-scorer.yaml")))
+            return primary;
+
+        var dir = AppContext.BaseDirectory;
+        while (dir is not null)
+        {
+            var candidate = Path.Combine(dir, "agents");
+            if (File.Exists(Path.Combine(candidate, "popularity-scorer.yaml")))
+                return candidate;
+            dir = Path.GetDirectoryName(dir);
+        }
+
+        throw new FileNotFoundException(
+            $"Could not locate scorer YAML files. Expected at '{primary}' or a parent directory's 'agents/' folder.");
     }
 
     private void EmitMermaidDiagram(Workflow workflow)

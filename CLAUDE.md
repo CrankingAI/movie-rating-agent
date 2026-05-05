@@ -12,7 +12,7 @@ Includes a comprehensive batch evaluation framework for comparing LLM performanc
 
 - **.NET 10**, C#, isolated worker model
 - **Microsoft.Extensions.AI Agent Framework** — `WorkflowBuilder` with fan-out/fan-in executors (`Microsoft.Agents.AI.Workflows`)
-- **Microsoft Foundry** back-end for LLMs — deployed models: **gpt-5.4**, **gpt-4o**, **gpt-4o-mini**
+- **Microsoft Foundry** back-end for LLMs — deployed models: **gpt-4o**, **gpt-4o-mini** (always); **gpt-5.4** and **gpt-5.5** opt-in via Bicep flags (quota-gated)
 - **Microsoft.Extensions.AI.Evaluation** — `CoherenceEvaluator`, `RelevanceEvaluator`, `GroundednessEvaluator`
 - **Azure Functions** (Linux, App Service plan with AlwaysOn, .NET 10 isolated worker)
 - **Azure Static Web Apps** — Movie rating UI frontend with Rate + Learn tabs
@@ -217,7 +217,8 @@ All resources in `rg-movie-rating-agent-dev` (eastus2) in subscription
 `BillDev` (`379168a0-b9fc-4fa0-a3cd-ce32ab20ee70`):
 
 - **AI Services**: `ai-movie-rating-agent-dev-<token>` — 2 GA deployments
-  (gpt-4o, gpt-4o-mini); gpt-5.4 is opt-in via Bicep `deployGpt54=true`
+  (gpt-4o, gpt-4o-mini); gpt-5.4 and gpt-5.5 are opt-in via Bicep
+  `deployGpt54=true` / `deployGpt55=true` (each requires sub quota)
 - **Storage**: `stmradev<token>` — blob container `jobs`, queue `job-requests`
 - **Function App**: `func-movie-rating-agent-dev-<token>` — .NET 10 isolated, AlwaysOn
 - **Static Web App**: `swa-movie-rating-agent-dev` — Standard tier, linked-backend → Function App
