@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using MovieRatingAgent.Agent.Declarative;
 using MovieRatingAgent.Agent.Executors;
 using MovieRatingAgent.Agent.Models;
+using MovieRatingAgent.Agent.Progress;
 using MovieRatingAgent.Core;
 using MovieRatingAgent.Core.Models;
 using MovieRatingAgent.Core.Observability;
@@ -43,7 +44,10 @@ public class MovieGreatnessAgent
         _modelId = options.ModelId;
     }
 
-    public async Task<JobResponse> RunAsync(JobRequest request, CancellationToken ct = default)
+    public Task<JobResponse> RunAsync(JobRequest request, CancellationToken ct = default)
+        => RunAsync(request, NullProgressSink.Instance, ct);
+
+    public async Task<JobResponse> RunAsync(JobRequest request, IProgressSink progress, CancellationToken ct = default)
     {
         using var activity = ActivitySourceInstance.StartActivity(
             "invoke_agent MovieGreatnessAgent",
@@ -53,20 +57,44 @@ public class MovieGreatnessAgent
         activity?.SetTag("gen_ai.agent.version", AgentVersion.Current);
         activity?.SetTag(TelemetryTags.MovieRequested, request.Topic);
 
-        var movieSelection = await ResolveMovieSelectionAsync(request.Topic, ct);
+        await progress.MarkStartedAsync(ProgressSteps.TitleResolution, ct);
+        MovieSelection movieSelection;
+        try
+        {
+            movieSelection = await ResolveMovieSelectionAsync(request.Topic, ct);
+            await progress.MarkCompletedAsync(ProgressSteps.TitleResolution, ct);
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            await progress.MarkFailedAsync(ProgressSteps.TitleResolution, ex.Message, ct);
+            throw;
+        }
+
         activity?.SetTag(TelemetryTags.MovieRequested, movieSelection.RequestedMovie);
         activity?.SetTag(TelemetryTags.MovieRated, movieSelection.RatedMovie);
 
         var workflow = BuildWorkflow();
-        var run = await InProcessExecution.RunAsync<string>(workflow, movieSelection.RatedMovie, sessionId: Guid.NewGuid().ToString(), ct);
+        var streamingRun = await InProcessExecution.RunStreamingAsync<string>(
+            workflow, movieSelection.RatedMovie, sessionId: Guid.NewGuid().ToString(), ct);
 
         WorkflowResult? workflowResult = null;
-        foreach (var evt in run.OutgoingEvents)
+        await foreach (var evt in streamingRun.WatchStreamAsync(ct))
         {
-            if (evt is WorkflowOutputEvent outputEvt && outputEvt.Is<WorkflowResult>(out var result))
+            switch (evt)
             {
-                workflowResult = result;
-                break;
+                case ExecutorInvokedEvent invoked when !ProgressSteps.InternalExecutors.Contains(invoked.ExecutorId):
+                    await progress.MarkStartedAsync(invoked.ExecutorId, ct);
+                    break;
+                case ExecutorCompletedEvent completed when !ProgressSteps.InternalExecutors.Contains(completed.ExecutorId):
+                    await progress.MarkCompletedAsync(completed.ExecutorId, ct);
+                    break;
+                case ExecutorFailedEvent failed when !ProgressSteps.InternalExecutors.Contains(failed.ExecutorId):
+                    await progress.MarkFailedAsync(failed.ExecutorId, failed.Data?.Message, ct);
+                    break;
+                case WorkflowOutputEvent output when output.Is<WorkflowResult>(out var result):
+                    workflowResult = result;
+                    break;
             }
         }
 

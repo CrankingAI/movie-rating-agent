@@ -113,6 +113,36 @@
         .status { text-align: center; padding: 2rem 0; }
         .error { color: #f44336; text-align: center; padding: 1rem 0; }
 
+        /* Progress checklist */
+        .progress-list {
+            list-style: none; padding: 0; margin: 1.25rem auto; max-width: 28rem;
+        }
+        .progress-list li {
+            display: flex; align-items: center; gap: 0.6rem;
+            padding: 0.4rem 0.6rem; border-radius: 6px;
+            transition: background-color 0.2s, opacity 0.2s, color 0.2s;
+        }
+        .progress-list li .icon {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 1.4rem; height: 1.4rem; flex: 0 0 auto;
+        }
+        .progress-list li.pending { opacity: 0.4; }
+        .progress-list li.pending .icon::before { content: "○"; }
+        .progress-list li.running {
+            background: color-mix(in srgb, var(--pico-primary) 12%, transparent);
+            color: var(--pico-primary);
+        }
+        .progress-list li.running .icon {
+            border: 2px solid var(--pico-muted-border-color);
+            border-top-color: var(--pico-primary);
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+            width: 1.1rem; height: 1.1rem; box-sizing: border-box;
+        }
+        .progress-list li.completed { color: var(--pico-color); }
+        .progress-list li.completed .icon::before { content: "✓"; color: #4caf50; font-weight: bold; }
+        .progress-list li.failed { color: #f44336; }
+        .progress-list li.failed .icon::before { content: "✕"; font-weight: bold; }
+
         /* Probe results toggle */
         .probe-result { display: none; }
         .probe-result.visible { display: block; animation: fadeIn 0.2s ease; }
@@ -328,7 +358,7 @@
                 });
                 if (!submitRes.ok) throw new Error(`Submit failed: ${submitRes.status}`);
                 const { jobId } = await submitRes.json();
-                output.innerHTML = `<p class="status"><span class="spinner"></span>Processing job ${jobId.substring(0, 8)}...</p>`;
+                output.innerHTML = renderProgress(jobId, null);
                 while (true) {
                     await new Promise(r => setTimeout(r, 2000));
                     const pollRes = await fetch(`${API_BASE}/jobs/${jobId}`);
@@ -337,11 +367,35 @@
                     const status = data.meta?.Status ?? data.meta?.status;
                     if (status === 2 || status === 'Completed') { renderResult(data.result); break; }
                     else if (status === 3 || status === 'Failed') { throw new Error(data.meta?.Error || data.meta?.error || 'Job failed'); }
-                    output.innerHTML = `<p class="status"><span class="spinner"></span>Still processing...</p>`;
+                    output.innerHTML = renderProgress(jobId, data.meta);
                 }
             } catch (err) {
                 output.innerHTML = `<p class="error">${err.message}</p>`;
             } finally { btn.disabled = false; }
+        }
+
+        function renderProgress(jobId, meta) {
+            const fallback = [
+                { Name: 'TitleResolution', Label: 'Resolving movie title' },
+                { Name: 'PopularityScorer', Label: 'Scoring popularity' },
+                { Name: 'ArtisticValueScorer', Label: 'Scoring artistic value' },
+                { Name: 'IconicnessScorer', Label: 'Scoring iconicness' },
+                { Name: 'ProsConsRollup', Label: 'Merging pros & cons' },
+                { Name: 'WeightedScoreRollup', Label: 'Computing weighted score' },
+            ];
+            const stateNames = ['pending', 'running', 'completed', 'failed'];
+            const progress = (meta?.Progress ?? meta?.progress ?? []);
+            const steps = progress.length ? progress : fallback.map(f => ({ ...f, State: 0 }));
+            const items = steps.map(s => {
+                const stateRaw = s.State ?? s.state ?? 0;
+                const stateName = typeof stateRaw === 'string'
+                    ? stateRaw.toLowerCase()
+                    : (stateNames[stateRaw] ?? 'pending');
+                const label = s.Label ?? s.label ?? s.Name ?? s.name ?? '';
+                return `<li class="${stateName}"><span class="icon"></span><span>${label}</span></li>`;
+            }).join('');
+            return `<p class="status" style="padding-bottom:0.5rem">Job <kbd>${jobId.substring(0,8)}</kbd></p>
+                    <ol class="progress-list">${items}</ol>`;
         }
 
         function renderResult(r) {

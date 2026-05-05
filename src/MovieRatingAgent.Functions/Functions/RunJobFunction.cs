@@ -2,10 +2,12 @@ using System.Diagnostics;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using MovieRatingAgent.Agent;
+using MovieRatingAgent.Agent.Progress;
 using MovieRatingAgent.Core;
 using MovieRatingAgent.Core.Models;
 using MovieRatingAgent.Core.Observability;
 using MovieRatingAgent.Core.Services;
+using MovieRatingAgent.Functions.Services;
 
 namespace MovieRatingAgent.Functions.Functions;
 
@@ -57,21 +59,24 @@ public class RunJobFunction
         meta = meta with
         {
             Status = JobStatus.Running,
-            StartedAt = DateTimeOffset.UtcNow
+            StartedAt = DateTimeOffset.UtcNow,
+            Progress = SeedProgressSteps(),
         };
         await _blobService.WriteMetaAsync(jobId, meta, ct);
 
+        await using var sink = new JobMetaProgressSink(_blobService, jobId, meta);
+
         try
         {
-            var result = await _agent.RunAsync(request, ct);
+            var result = await _agent.RunAsync(request, sink, ct);
             await _blobService.WriteResponseAsync(jobId, result, ct);
 
-            meta = meta with
+            var terminal = sink.Snapshot with
             {
                 Status = JobStatus.Completed,
-                CompletedAt = DateTimeOffset.UtcNow
+                CompletedAt = DateTimeOffset.UtcNow,
             };
-            await _blobService.WriteMetaAsync(jobId, meta, ct);
+            await sink.ReplaceAndFlushAsync(terminal, ct);
 
             activity?.SetTag(TelemetryTags.JobStatus, "Completed");
             activity?.SetTag(TelemetryTags.MovieRequested, result.RequestedMovie);
@@ -93,15 +98,25 @@ public class RunJobFunction
             activity?.SetTag(TelemetryTags.MovieRequested, request.Topic);
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
 
-            meta = meta with
+            var terminal = sink.Snapshot with
             {
                 Status = JobStatus.Failed,
                 CompletedAt = DateTimeOffset.UtcNow,
-                Error = ex.Message
+                Error = ex.Message,
             };
-            await _blobService.WriteMetaAsync(jobId, meta, ct);
+            await sink.ReplaceAndFlushAsync(terminal, ct);
         }
     }
+
+    private static IReadOnlyList<ProgressStep> SeedProgressSteps()
+        => ProgressSteps.Ordered
+            .Select(s => new ProgressStep
+            {
+                Name = s.Name,
+                Label = s.Label,
+                State = ProgressState.Pending,
+            })
+            .ToList();
 
     private static Activity? StartActivityFromContext(
         FunctionContext context, string name, ActivityKind kind)
