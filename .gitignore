@@ -6,6 +6,8 @@
 *.suo
 *.userprefs
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/*.lock
 
 # .NET build output
 **/bin/
