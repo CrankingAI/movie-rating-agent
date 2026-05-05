@@ -36,6 +36,11 @@ if ! command -v aspire &>/dev/null; then
   exit 1
 fi
 
+# Make sure Docker Desktop is awake — Azurite runs as a container, and a
+# Resource-Saver-asleep daemon causes the Functions worker to hang on the
+# first blob/queue write. start-docker.sh is a no-op if Docker is already up.
+"${REPO_ROOT}/scripts/start-docker.sh"
+
 mkdir -p "${REPO_ROOT}/otel-export"
 
 echo "==> Starting Aspire AppHost for local development..."

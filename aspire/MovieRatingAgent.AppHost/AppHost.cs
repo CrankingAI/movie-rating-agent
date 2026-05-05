@@ -22,8 +22,10 @@ var foundryApiKey   = builder.AddParameter("foundry-apikey", secret: true);
 var foundryModelId  = builder.AddParameter("foundry-modelid", secret: false);
 
 // ── Azurite (queue + blob emulator) ───────────────────────────────────────
+// Persistent lifetime keeps the container warm across Aspire restarts so
+// dev iteration is fast even if Docker Desktop went into Resource Saver mode.
 var storage = builder.AddAzureStorage("storage")
-    .RunAsEmulator();
+    .RunAsEmulator(emulator => emulator.WithLifetime(ContainerLifetime.Persistent));
 
 var blobs = storage.AddBlobs("blobs");
 var queues = storage.AddQueues("queues");
@@ -33,6 +35,7 @@ var queues = storage.AddQueues("queues");
 // offline inspection. The Aspire dashboard is the primary UX; this file
 // export is the "diff against last run" tool.
 var otelCollector = builder.AddContainer("otel-collector", "otel/opentelemetry-collector-contrib")
+    .WithLifetime(ContainerLifetime.Persistent)
     .WithHttpEndpoint(targetPort: 4318, name: "otlp-http")
     .WithBindMount("../../otel-collector-config.yaml", "/etc/otelcol-contrib/config.yaml", isReadOnly: true)
     .WithBindMount("../../otel-export", "/otel-export");
