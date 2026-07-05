@@ -1,0 +1,48 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "movieratingagent-edge",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-06-01",
+  // Watched paths only, by default. Widening to movieratingagent.com/* is the
+  // documented opt-in (docs/edge.md — mind free-tier quotas).
+  // Route objects stay one-per-line-expanded so Biome's formatter accepts the
+  // file for any substituted movieratingagent.com length (expand: auto preserves them).
+  "routes": [
+    {
+      "pattern": "movieratingagent.com/sitemap.xml",
+      "zone_name": "movieratingagent.com"
+    },
+    {
+      "pattern": "movieratingagent.com/llms.txt",
+      "zone_name": "movieratingagent.com"
+    },
+    {
+      "pattern": "movieratingagent.com/llms-full.txt",
+      "zone_name": "movieratingagent.com"
+    },
+    {
+      "pattern": "movieratingagent.com/robots.txt",
+      "zone_name": "movieratingagent.com"
+    },
+    {
+      "pattern": "movieratingagent.com/security.txt",
+      "zone_name": "movieratingagent.com"
+    },
+    {
+      "pattern": "movieratingagent.com/.well-known/*",
+      "zone_name": "movieratingagent.com"
+    }
+  ],
+  "analytics_engine_datasets": [
+    { "binding": "EDGE_HITS", "dataset": "edge_hits" }
+  ],
+  "vars": {
+    "AZURE_ENABLED": "true",
+    "POSTHOG_ENABLED": "false",
+    "POSTHOG_HOST": "https://us.i.posthog.com"
+  }
+  // Secrets (set with `wrangler secret put <NAME>`, never here):
+  //   AZURE_DCE_ENDPOINT  AZURE_DCR_ID  AZURE_STREAM
+  //   AZURE_TENANT_ID  AZURE_CLIENT_ID  AZURE_CLIENT_SECRET
+  //   POSTHOG_TOKEN
+}
